@@ -57,7 +57,7 @@ export function SecurePaymentForm({ amount, onSuccess }: PaymentFormProps) {
     <div className="p-4 border rounded-md">
       <PaymentForm
         applicationId={SQUARE_APP_ID}
-        cardTokenizeResponseReceived={async (token, verifiedBuyer) => {
+        cardTokenizeResponseReceived={async (token: any, verifiedBuyer) => {
           setIsProcessing(true);
           const res = await processPayment(amount, token.token);
           setIsProcessing(false);

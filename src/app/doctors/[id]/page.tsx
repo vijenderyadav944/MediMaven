@@ -1,155 +1,110 @@
-"use client"
-
-import * as React from "react"
-import { useParams } from "next/navigation"
-import { TimeSlotPicker } from "@/components/booking/TimeSlotPicker"
-import { SecurePaymentForm } from "@/components/booking/PaymentForm"
+import Link from "next/link"
+import Image from "next/image"
+import { notFound } from "next/navigation"
+import { getDoctorById } from "@/app/actions/doctor"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { format } from "date-fns"
-import { CalendarIcon, Clock, CreditCard } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { CheckCircle2, Clock, DollarSign, MapPin, Star, Video, Calendar } from "lucide-react"
 
-// Mock Doctor Data (Normally fetched via API)
-const MOCK_DOCTOR = {
-  id: "1",
-  name: "Dr. Emily Chen",
-  specialty: "Cardiologist",
-  image: "https://i.pravatar.cc/150?u=a042581f4e29026024d",
-  price: 120
-}
+export default async function DoctorProfilePage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const doctor = await getDoctorById(params.id)
 
-export default function BookingPage() {
-  const params = useParams()
-  const [date, setDate] = React.useState<Date | undefined>(new Date())
-  const [slot, setSlot] = React.useState<string | null>(null)
-  const [step, setStep] = React.useState(1) // 1: Date/Time, 2: Review/Pay
-  const [transactionId, setTransactionId] = React.useState<string | null>(null)
-
-  const handleContinue = () => {
-    setStep(2)
-  }
-
-  const handleSuccess = (id: string) => {
-    setTransactionId(id)
-    alert(`Payment Successful! Transaction: ${id}. Redirecting to video room...`)
-    // Redirect to /session/[id] in real app
+  if (!doctor) {
+    notFound()
   }
 
   return (
-    <div className="min-h-screen bg-muted/10 py-12 px-4">
-      <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-8">
-
-        {/* Main Content */}
-        <div className="md:col-span-2 space-y-6">
-          <Card className="shadow-md border-border/50">
-            <CardHeader>
-              <CardTitle>
-                {step === 1 ? "Select Appointment Time" : "Secure Checkout"}
-              </CardTitle>
-              <CardDescription>
-                {step === 1
-                  ? "Choose a date and time for your consultation."
-                  : "Complete your payment to confirm the booking."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {step === 1 ? (
-                <TimeSlotPicker
-                  date={date}
-                  setDate={setDate}
-                  slot={slot}
-                  setSlot={setSlot}
+    <div className="container py-8 max-w-5xl">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Sidebar / Info Card */}
+        <div className="md:col-span-1 space-y-6">
+          <Card className="overflow-hidden border-border/50 shadow-lg">
+            <div className="aspect-square relative bg-muted">
+              {doctor.image ? (
+                <Image
+                  src={doctor.image}
+                  alt={doctor.name}
+                  fill
+                  className="object-cover"
                 />
               ) : (
-                <div className="space-y-6">
-                  <div className="bg-muted p-4 rounded-lg space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm font-medium">Service</span>
-                      <span className="text-sm">Video Consultation</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm font-medium">Provider</span>
-                      <span className="text-sm">{MOCK_DOCTOR.name}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm font-medium">Time</span>
-                      <span className="text-sm text-primary font-bold">
-                        {date && slot ? `${format(date, "MMM d")} @ ${slot}` : ""}
-                      </span>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <SecurePaymentForm
-                    amount={MOCK_DOCTOR.price}
-                    onSuccess={handleSuccess}
-                  />
+                <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary text-4xl font-bold">
+                  {doctor.name[0]}
                 </div>
               )}
+            </div>
+            <CardContent className="p-6 space-y-4">
+              <div>
+                <h1 className="text-2xl font-bold">{doctor.name}</h1>
+                <p className="text-primary font-medium">{doctor.specialty}</p>
+              </div>
+
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                <span className="font-bold text-foreground">{doctor.rating}</span>
+                <span>({doctor.reviews} reviews)</span>
+              </div>
+
+              <div className="space-y-2 pt-4 border-t">
+                <div className="flex items-center gap-2 text-sm">
+                  <DollarSign className="h-4 w-4 text-primary" />
+                  <span className="font-medium">${doctor.price} / Visit</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <span>{doctor.consultationDuration} min session</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Video className="h-4 w-4 text-primary" />
+                  <span>Online Consultation</span>
+                </div>
+              </div>
+
+              <Button className="w-full" asChild>
+                <Link href={`/session/book?doctorId=${doctor.id}`}>Book Appointment</Link>
+              </Button>
             </CardContent>
-            {step === 1 && (
-              <CardFooter className="flex justify-end border-t p-6">
-                <Button
-                  size="lg"
-                  disabled={!date || !slot}
-                  onClick={handleContinue}
-                >
-                  Continue to Payment
-                </Button>
-              </CardFooter>
-            )}
           </Card>
         </div>
 
-        {/* Sidebar Summary */}
-        <div className="md:col-span-1">
-          <Card className="shadow-md border-border/50 sticky top-24">
-            <CardHeader className="bg-muted/30 pb-4">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-12 w-12 border-2 border-background">
-                  <AvatarImage src={MOCK_DOCTOR.image} />
-                  <AvatarFallback>EC</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="font-semibold text-sm">{MOCK_DOCTOR.name}</h3>
-                  <p className="text-xs text-muted-foreground">{MOCK_DOCTOR.specialty}</p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-6 space-y-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Consultation Fee</span>
-                <span className="font-medium">${MOCK_DOCTOR.price}.00</span>
-              </div>
-              <Separator />
+        {/* Main Content */}
+        <div className="md:col-span-2 space-y-8">
+          <Card className="border-border/50">
+            <CardContent className="p-6">
+              <h2 className="text-xl font-bold mb-4">About</h2>
+              <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                {doctor.bio || "No biography available."}
+              </p>
+            </CardContent>
+          </Card>
 
-              {date && slot && (
-                <div className="space-y-3 bg-primary/5 p-3 rounded-lg border border-primary/10">
-                  <div className="flex items-center gap-2 text-sm text-foreground/80">
-                    <CalendarIcon className="h-4 w-4 text-primary" />
-                    <span>{format(date, "MMMM d, yyyy")}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-foreground/80">
-                    <Clock className="h-4 w-4 text-primary" />
-                    <span>{slot}</span>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-between items-center pt-2">
-                <span className="font-bold">Total</span>
-                <span className="text-xl font-bold text-primary">${MOCK_DOCTOR.price}.00</span>
+          <Card className="border-border/50">
+            <CardContent className="p-6">
+              <h2 className="text-xl font-bold mb-4">Qualifications</h2>
+              <div className="flex flex-wrap gap-2">
+                {doctor.qualifications && doctor.qualifications.length > 0 ? (
+                  doctor.qualifications.map((q: string, i: number) => (
+                    <Badge key={i} variant="secondary" className="px-3 py-1">
+                      {q}
+                    </Badge>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground text-sm">No qualifications listed.</p>
+                )}
               </div>
             </CardContent>
-            <CardFooter className="bg-muted/30 p-4 text-xs text-muted-foreground text-center">
-              <div className="w-full flex items-center justify-center gap-1">
-                <CreditCard className="h-3 w-3" /> Secure Payment
+          </Card>
+
+          {/* Placeholder for Reviews - we will add this later */}
+          <Card className="border-border/50">
+            <CardContent className="p-6">
+              <h2 className="text-xl font-bold mb-4">Patient Reviews</h2>
+              <div className="bg-muted/30 border-dashed border-2 rounded-lg p-6 text-center text-muted-foreground">
+                Reviews coming soon...
               </div>
-            </CardFooter>
+            </CardContent>
           </Card>
         </div>
       </div>

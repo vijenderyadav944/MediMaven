@@ -3,8 +3,8 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, Stethoscope } from "lucide-react"
-import { motion } from "framer-motion"
+import { Menu, Stethoscope, User, LayoutDashboard, LogOut } from "lucide-react"
+import { useSession, signOut } from "next-auth/react" // Client side session
 
 import { Button } from "@/components/ui/button"
 import {
@@ -12,7 +12,15 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { ThemeToggle } from "@/components/theme-toggle" // I need to create this too, or just inline it? I'll assume I'll create it or omit for now. I'll omit ThemeToggle for this specific file until I create it.
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 // Mock Links
 const navigation = [
@@ -24,6 +32,7 @@ const navigation = [
 
 export function Navbar() {
   const pathname = usePathname()
+  const { data: session } = useSession() // Hook to get session
   const [isScrolled, setIsScrolled] = React.useState(false)
 
   React.useEffect(() => {
@@ -37,8 +46,8 @@ export function Navbar() {
   return (
     <header
       className={`sticky top-0 z-50 w-full transition-all duration-300 ${isScrolled
-          ? "bg-background/80 backdrop-blur-md border-b shadow-sm"
-          : "bg-transparent border-transparent"
+        ? "bg-background/80 backdrop-blur-md border-b shadow-sm"
+        : "bg-transparent border-transparent"
         }`}
     >
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -68,16 +77,54 @@ export function Navbar() {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-4">
-          <Link href="/auth/login">
-            <Button variant="ghost" className="text-muted-foreground hover:text-primary">
-              Log in
-            </Button>
-          </Link>
-          <Link href="/auth/register">
-            <Button size="sm" className="rounded-full px-6 shadow-md hover:shadow-lg transition-all duration-300">
-              Get Started
-            </Button>
-          </Link>
+          {session?.user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={session.user.image || ""} alt={session.user.name || ""} />
+                    <AvatarFallback>{session.user.name?.[0]?.toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{session.user.name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{session.user.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard">
+                    <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/settings">
+                    <User className="mr-2 h-4 w-4" /> Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => signOut()}>
+                  <LogOut className="mr-2 h-4 w-4" /> Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Link href="/auth/login">
+                <Button variant="ghost" className="text-muted-foreground hover:text-primary">
+                  Log in
+                </Button>
+              </Link>
+              <Link href="/auth/register">
+                <Button size="sm" className="rounded-full px-6 shadow-md hover:shadow-lg transition-all duration-300">
+                  Get Started
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu */}
@@ -89,7 +136,7 @@ export function Navbar() {
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+            <SheetContent side="right" className="w-75 sm:w-100">
               <nav className="flex flex-col gap-4 mt-8">
                 {navigation.map((item) => (
                   <Link
@@ -100,13 +147,29 @@ export function Navbar() {
                     {item.name}
                   </Link>
                 ))}
+
                 <div className="flex flex-col gap-3 mt-4">
-                  <Link href="/auth/login" className="w-full">
-                    <Button variant="outline" className="w-full justify-center">Log in</Button>
-                  </Link>
-                  <Link href="/auth/register" className="w-full">
-                    <Button className="w-full justify-center">Get Started</Button>
-                  </Link>
+                  {session?.user ? (
+                    <>
+                      <Link href="/dashboard" className="w-full">
+                        <Button className="w-full justify-start gap-2">
+                          <LayoutDashboard className="h-4 w-4" /> Dashboard
+                        </Button>
+                      </Link>
+                      <Button variant="outline" className="w-full justify-start gap-2 text-red-500" onClick={() => signOut()}>
+                        <LogOut className="h-4 w-4" /> Log out
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/auth/login" className="w-full">
+                        <Button variant="outline" className="w-full justify-center">Log in</Button>
+                      </Link>
+                      <Link href="/auth/register" className="w-full">
+                        <Button className="w-full justify-center">Get Started</Button>
+                      </Link>
+                    </>
+                  )}
                 </div>
               </nav>
             </SheetContent>

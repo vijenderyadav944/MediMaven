@@ -9,10 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Stethoscope, Loader2 } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast" // I need to install toast or createsit. Shadcn default is `use-toast`.
-
-// Since I haven't installed toast explicitly (wait, I did not run the toast add command), I will mock it or install it. 
-// I'll assume simple alerts for now or install toast in the next step. I'll stick to simple state.
 
 export default function RegisterPage() {
   const router = useRouter()

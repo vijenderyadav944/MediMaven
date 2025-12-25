@@ -44,7 +44,7 @@ export function Footer() {
         </div>
       </div>
       <div className="container mx-auto px-4 mt-12 pt-8 border-t flex flex-col md:flex-row items-center justify-between text-xs text-muted-foreground">
-        <p>&copy; 2024 MediMaven Inc. All rights reserved.</p>
+        <p>&copy; 2025 MediMaven Inc. All rights reserved.</p>
         <div className="flex gap-4">
           <span>Made for Hackathon</span>
         </div>

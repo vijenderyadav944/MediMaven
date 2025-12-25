@@ -52,7 +52,7 @@ export function AvailabilityManager() {
 function TimeSelect({ defaultValue }: { defaultValue: string }) {
   return (
     <Select defaultValue={defaultValue}>
-      <SelectTrigger className="w-[110px]">
+      <SelectTrigger className="w-27.5">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

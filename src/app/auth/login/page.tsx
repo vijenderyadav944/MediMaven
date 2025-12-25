@@ -1,8 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { useFormState, useFormStatus } from "react-dom"
-import { authenticate } from "@/app/auth/actions-login" // Will create this next
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -39,25 +40,37 @@ export default function LoginPage() {
 }
 
 function LoginForm() {
-  // Using simple form submission for now to match NextAuth credentials flow
-  // Need to handle client-side form submission to call signIn
-
-  // Actually, standard NextAuth pattern with Server Actions is nuanced. 
-  // I will use a simple client-side handler calling signIn() for simplicity and reliability.
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const router = useRouter();
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setIsPending(true);
+    setError(null);
+    
     const formData = new FormData(e.currentTarget);
-    // I can't call signIn directly here if I want nice error handling without redirect loop issues sometimes. 
-    // But let's try the standard `signIn` import from `next-auth/react` (Wait, I only installed `next-auth@beta` which is v5).
-    // v5 uses server actions or `signIn` from `@/auth`.
-    // I will implement the action in `actions-login.ts` properly using the `signIn` exported from `@/lib/auth`.
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    
+    const result = await signIn('credentials', {
+      email,
+      password,
+      redirect: false,
+    });
+    
+    if (result?.error) {
+      setError('Invalid credentials.');
+      setIsPending(false);
+    } else {
+      // Session is now updated in SessionProvider, navigate to dashboard
+      router.push('/dashboard');
+      router.refresh();
+    }
   }
 
-  // REVISION: I will use a Server Action `authenticate` in `actions-login.ts`
-
   return (
-    <form action={authenticate} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input id="email" name="email" type="email" placeholder="m@example.com" required />
@@ -69,17 +82,19 @@ function LoginForm() {
         </div>
         <Input id="password" name="password" type="password" required />
       </div>
-      <LoginButton />
-    </form>
-  )
-}
 
-function LoginButton() {
-  const { pending } = useFormStatus();
-  return (
-    <Button className="w-full" type="submit" disabled={pending}>
-      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-      Sign in
-    </Button>
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-sm text-red-600 font-medium text-center">
+            {error}
+          </p>
+        </div>
+      )}
+
+      <Button className="w-full" type="submit" disabled={isPending}>
+        {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+        Sign in
+      </Button>
+    </form>
   )
 }

@@ -41,8 +41,8 @@ export async function registerUser(formData: z.infer<typeof RegisterSchema>) {
     await newUser.save();
 
     return { success: true };
-  } catch (error) {
-    console.error("Registration error:", error);
-    return { error: "Registration failed" };
+  } catch (error: any) {
+    console.error("Detailed Registration Error:", error);
+    return { error: error.message || "Registration failed" };
   }
 }

@@ -26,13 +26,14 @@ export const authConfig = {
         if (parsedCredentials.success) {
           const { email, password } = parsedCredentials.data;
           const user = await getUser(email);
+
           if (!user) return null;
 
           const passwordsMatch = await bcrypt.compare(password, user.password || "");
+
           if (passwordsMatch) return user;
         }
 
-        console.log("Invalid credentials");
         return null;
       },
     }),
@@ -41,13 +42,34 @@ export const authConfig = {
     signIn: "/auth/login",
   },
   callbacks: {
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isOnDashboard = nextUrl.pathname.startsWith('/dashboard');
+      const isOnAuth = nextUrl.pathname.startsWith('/auth');
+
+      // 1. Redirect unauthenticated users trying to access dashboard
+      if (isOnDashboard) {
+        if (isLoggedIn) return true;
+        return false; // Redirects to login
+      }
+
+      // 2. Redirect logged-in users trying to access auth pages (login/register)
+      if (isLoggedIn && isOnAuth) {
+        const role = (auth.user as any).role || 'patient';
+        // Redirect to specific dashboard based on role
+        if (role === 'admin') return Response.redirect(new URL('/admin/dashboard', nextUrl));
+        if (role === 'doctor') return Response.redirect(new URL('/doctor/dashboard', nextUrl));
+        return Response.redirect(new URL('/patient/dashboard', nextUrl));
+      }
+
+      return true;
+    },
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
       }
       if (trigger === "update" && session?.user) {
-        // Allow updating session (e.g. after onboarding)
         token.role = session.user.role;
         token.onboardingCompleted = session.user.onboardingCompleted;
       }

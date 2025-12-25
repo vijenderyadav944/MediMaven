@@ -79,18 +79,19 @@ export default function Home() {
               <div className="relative z-10 w-full max-w-sm bg-card/80 backdrop-blur-xl border border-white/20 shadow-2xl rounded-3xl p-6 overflow-hidden">
                 {/* Doctor Video Placeholder */}
                 <div className="relative aspect-[4/5] bg-muted rounded-2xl overflow-hidden mb-4">
-                  {/* Placeholder Gradient until image is ready */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-slate-200 to-slate-100 flex items-center justify-center text-slate-400">
-                    Doctor Video
-                  </div>
+                  <img
+                    src="/images/doctor_call.png"
+                    alt="Doctor Video Call"
+                    className="w-full h-full object-cover"
+                  />
 
                   {/* UI Overlay */}
                   <div className="absolute bottom-4 left-4 right-4 p-3 bg-black/40 backdrop-blur-md rounded-xl text-white flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-                      <div className="h-6 w-24 bg-white/20 rounded animate-pulse"></div> {/* Audio Vis */}
+                      <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <div className="text-xs font-medium">Dr. Emily Chen</div>
                     </div>
-                    <div className="h-8 w-8 bg-red-500 rounded-full flex items-center justify-center shadow-lg">
+                    <div className="h-8 w-8 bg-red-500 rounded-full flex items-center justify-center shadow-lg cursor-pointer hover:bg-red-600 transition-colors">
                       <Video className="h-4 w-4" />
                     </div>
                   </div>
@@ -99,9 +100,8 @@ export default function Home() {
                 {/* Stats */}
                 <div className="flex items-center justify-between px-2">
                   <div className="flex -space-x-3">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="h-10 w-10 rounded-full border-2 border-background bg-slate-200"></div>
-                    ))}
+                    <img src="/images/avatar1.png" alt="Patient 1" className="h-10 w-10 rounded-full border-2 border-background object-cover" />
+                    <img src="/images/avatar2.png" alt="Patient 2" className="h-10 w-10 rounded-full border-2 border-background object-cover" />
                     <div className="h-10 w-10 rounded-full border-2 border-background bg-slate-100 flex items-center justify-center text-xs font-bold">+2k</div>
                   </div>
                   <div className="text-right">
