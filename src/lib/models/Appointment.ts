@@ -13,6 +13,12 @@ export interface IAppointment extends Document {
   notes?: string;
   rating?: number;
   review?: string;
+  transcription?: string;
+  summary?: {
+    english: string;
+    hindi: string;
+    generatedAt: Date;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,6 +36,12 @@ const AppointmentSchema = new Schema<IAppointment>(
     notes: { type: String },
     rating: { type: Number, min: 1, max: 5 },
     review: { type: String },
+    transcription: { type: String },
+    summary: {
+      english: { type: String },
+      hindi: { type: String },
+      generatedAt: { type: Date },
+    },
   },
   { timestamps: true }
 );

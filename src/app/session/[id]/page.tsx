@@ -6,10 +6,11 @@ import { getSessionDetails } from "@/app/session/actions"
 import { VideoRoom } from "@/components/video/VideoRoom"
 import { ChatPanel } from "@/components/video/ChatPanel"
 import { PatientHealthCard } from "@/components/video/PatientHealthCard"
+import { TranscriptionPanel } from "@/components/video/TranscriptionPanel"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, ArrowLeft, Shield, Video, Clock, User, MessageCircle, FileHeart } from "lucide-react"
+import { Loader2, ArrowLeft, Shield, Video, Clock, User, MessageCircle, FileHeart, FileText } from "lucide-react"
 
 export default function SessionPage() {
   const router = useRouter()
@@ -22,6 +23,7 @@ export default function SessionPage() {
   const [error, setError] = React.useState<string | null>(null)
   const [isChatOpen, setIsChatOpen] = React.useState(false)
   const [isHealthPanelOpen, setIsHealthPanelOpen] = React.useState(false)
+  const [isTranscriptionOpen, setIsTranscriptionOpen] = React.useState(false)
 
   React.useEffect(() => {
     const loadSession = async () => {
@@ -176,6 +178,16 @@ export default function SessionPage() {
                   Patient Info
                 </Button>
               )}
+              {/* Transcription button */}
+              <Button
+                variant="outline"
+                size="sm"
+                className={`border-neutral-600 text-white hover:bg-neutral-700 ${isTranscriptionOpen ? 'bg-primary/20 border-primary' : 'bg-neutral-800'}`}
+                onClick={() => setIsTranscriptionOpen(!isTranscriptionOpen)}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Transcribe
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -212,6 +224,13 @@ export default function SessionPage() {
         currentUserId={sessionData?.userId || ""}
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
+      />
+      
+      {/* Transcription Panel */}
+      <TranscriptionPanel
+        appointmentId={sessionData?.appointmentId || sessionId}
+        isOpen={isTranscriptionOpen}
+        onClose={() => setIsTranscriptionOpen(false)}
       />
     </div>
   )

@@ -107,30 +107,32 @@ function BookAppointmentContent() {
   // Success Step
   if (step === "success") {
     return (
-      <div className="container max-w-lg py-20 text-center">
-        <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-xl p-8">
-          <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Booking Confirmed!</h1>
-          <p className="text-muted-foreground mb-6">
-            Your appointment with Dr. {doctor.name} has been booked successfully.
-          </p>
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-4 mb-6 text-left space-y-2">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Date</span>
-              <span className="font-medium">{date && format(date, 'PPP')}</span>
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="w-full max-w-lg">
+          <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-xl p-8 text-center">
+            <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold mb-2">Booking Confirmed!</h1>
+            <p className="text-muted-foreground mb-6">
+              Your appointment with Dr. {doctor.name} has been booked successfully.
+            </p>
+            <div className="bg-white dark:bg-gray-900 rounded-lg p-4 mb-6 text-left space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Date</span>
+                <span className="font-medium">{date && format(date, 'PPP')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Time</span>
+                <span className="font-medium">{selectedSlot}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Amount Paid</span>
+                <span className="font-medium">₹{doctor.price}</span>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Time</span>
-              <span className="font-medium">{selectedSlot}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Amount Paid</span>
-              <span className="font-medium">₹{doctor.price}</span>
-            </div>
+            <Button onClick={() => router.push("/patient/dashboard")} className="w-full">
+              Go to Dashboard
+            </Button>
           </div>
-          <Button onClick={() => router.push("/patient/dashboard")} className="w-full">
-            Go to Dashboard
-          </Button>
         </div>
       </div>
     )
