@@ -10,7 +10,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="relative px-4 pt-10 pb-20 md:pt-20 md:pb-32 overflow-hidden bg-gradient-to-b from-background to-secondary/5">
+      <section className="relative px-4 pt-10 pb-20 md:pt-20 md:pb-32 overflow-hidden bg-linear-to-b from-background to-secondary/5">
         <div className="container mx-auto max-w-6xl relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
 
@@ -31,7 +31,7 @@ export default function Home() {
 
               <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground leading-[1.1]">
                 Healthcare, <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-teal-500">Reimagined.</span>
+                <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-teal-500">Reimagined.</span>
               </h1>
 
               <p className="text-lg md:text-xl text-muted-foreground max-w-lg leading-relaxed">

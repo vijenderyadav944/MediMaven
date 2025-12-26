@@ -9,6 +9,7 @@ import { getDoctorStats, getDoctorAppointments } from "@/app/actions/appointment
 import { format, isAfter, isBefore, addMinutes } from "date-fns"
 import { DoctorScheduleView } from "@/components/dashboard/DoctorScheduleView"
 import { UpcomingAppointments } from "@/components/dashboard/UpcomingAppointments"
+import { InstantMeetingRequests } from "@/components/dashboard/InstantMeetingRequests"
 
 export default async function DoctorDashboard() {
   const session = await auth()
@@ -152,6 +153,9 @@ export default async function DoctorDashboard() {
         {/* Upcoming Appointments */}
         <UpcomingAppointments appointments={upcomingAppointments} />
       </div>
+
+      {/* Instant Meeting Requests - Prominent Section */}
+      <InstantMeetingRequests />
 
       {/* Weekly Schedule View */}
       <DoctorScheduleView appointments={allAppointments} />

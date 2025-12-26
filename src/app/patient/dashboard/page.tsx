@@ -4,7 +4,7 @@ import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Clock, CreditCard, History, User, Video, Star, MessageSquare } from "lucide-react"
+import { Calendar, Clock, CreditCard, History, User, Video, Star, MessageSquare, Zap } from "lucide-react"
 import { getPatientAppointments } from "@/app/actions/appointment"
 import { format, isAfter, isBefore, addMinutes } from "date-fns"
 
@@ -116,6 +116,27 @@ export default async function PatientDashboard() {
 
         {/* Quick Actions / Stats */}
         <div className="space-y-6">
+          {/* Instant Consultation Card */}
+          <Card className="border-amber-500/30 bg-linear-to-br from-amber-500/10 to-transparent">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Zap className="h-5 w-5 text-amber-500" />
+                Need Help Now?
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-3">
+                Connect with an available doctor in minutes.
+              </p>
+              <Link href="/session/instant" className="block">
+                <Button className="w-full gap-2 bg-amber-500 hover:bg-amber-600">
+                  <Zap className="h-4 w-4" />
+                  Instant Consultation
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Quick Actions</CardTitle>
@@ -169,7 +190,7 @@ export default async function PatientDashboard() {
                   <CreditCard className="h-4 w-4" /> Total Spent
                 </span>
                 <span className="text-muted-foreground font-medium">
-                  ${appointments.reduce((sum: number, a: any) => sum + (a.amount || 0), 0)}
+                  ₹{appointments.reduce((sum: number, a: any) => sum + (a.amount || 0), 0).toLocaleString()}
                 </span>
               </div>
             </CardContent>

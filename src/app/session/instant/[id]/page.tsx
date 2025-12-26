@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
-import { getSessionDetails } from "@/app/session/actions"
+import { getInstantMeetingDetails, startInstantMeeting } from "@/app/actions/instant-meeting"
 import { DailyVideoRoom } from "@/components/video/DailyVideoRoom"
 import { ChatPanel } from "@/components/video/ChatPanel"
 import { PatientHealthCard } from "@/components/video/PatientHealthCard"
@@ -10,12 +10,12 @@ import { TranscriptionPanel } from "@/components/video/TranscriptionPanel"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, ArrowLeft, Shield, User, MessageCircle, FileHeart, FileText, CheckCircle2 } from "lucide-react"
+import { Loader2, ArrowLeft, Shield, User, MessageCircle, FileHeart, FileText, CheckCircle2, Zap } from "lucide-react"
 
-export default function SessionPage() {
+export default function InstantSessionPage() {
   const router = useRouter()
   const params = useParams()
-  const sessionId = params.id as string
+  const roomId = params.id as string
   
   const [sessionData, setSessionData] = React.useState<any>(null)
   const [isLoading, setIsLoading] = React.useState(true)
@@ -27,11 +27,15 @@ export default function SessionPage() {
   React.useEffect(() => {
     const loadSession = async () => {
       try {
-        const data = await getSessionDetails(sessionId)
+        const data = await getInstantMeetingDetails(roomId)
         if (data.error) {
           setError(data.error)
         } else {
           setSessionData(data)
+          // Mark as in-progress when loading
+          if (data.instantMeetingId) {
+            await startInstantMeeting(data.instantMeetingId)
+          }
         }
       } catch (err) {
         setError("Failed to load session details")
@@ -41,7 +45,7 @@ export default function SessionPage() {
     }
     
     loadSession()
-  }, [sessionId])
+  }, [roomId])
 
   const handleLeave = React.useCallback(() => {
     router.push("/dashboard")
@@ -51,7 +55,7 @@ export default function SessionPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-black">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="text-white">Loading session details...</p>
+        <p className="text-white">Loading instant session...</p>
       </div>
     )
   }
@@ -85,7 +89,7 @@ export default function SessionPage() {
             </div>
             <CardTitle className="text-2xl text-white">Session Completed</CardTitle>
             <CardDescription className="text-neutral-400">
-              This consultation has already been completed.
+              This instant consultation has already been completed.
             </CardDescription>
           </CardHeader>
           
@@ -106,7 +110,7 @@ export default function SessionPage() {
                 <Button 
                   size="lg" 
                   className="w-full h-12"
-                  onClick={() => router.push(`/session/${sessionData.appointmentId}/review`)}
+                  onClick={() => router.push(`/session/instant/${sessionData.instantMeetingId}/review`)}
                 >
                   View Review & Summary
                 </Button>
@@ -126,7 +130,7 @@ export default function SessionPage() {
     )
   }
 
-  // Video Room - with pre-join lobby built into the component
+  // Video Room
   return (
     <div className="min-h-screen bg-black flex">
       {/* Patient Health Panel - Only visible for doctors */}
@@ -142,13 +146,19 @@ export default function SessionPage() {
       <div className="flex-1 flex flex-col">
         {/* Top bar with tools */}
         <div className="flex items-center justify-between p-4 bg-black/90 border-b border-neutral-800">
-          <Button 
-            variant="ghost" 
-            className="text-white hover:text-white/80" 
-            onClick={() => router.push("/dashboard")}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              className="text-white hover:text-white/80" 
+              onClick={() => router.push("/dashboard")}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+            </Button>
+            <Badge variant="secondary" className="bg-amber-500/20 text-amber-400 border-amber-500/30">
+              <Zap className="h-3 w-3 mr-1" />
+              Instant Session
+            </Badge>
+          </div>
           <div className="flex items-center gap-3">
             {/* Patient Health button - only for doctors */}
             {sessionData?.isDoctor && (
@@ -192,14 +202,15 @@ export default function SessionPage() {
         <div className="flex-1 p-4 flex items-center justify-center">
           <div className="w-full max-w-6xl">
             <DailyVideoRoom
-              roomName={sessionData?.roomName || sessionId}
+              roomName={sessionData?.roomName || roomId}
               userName={sessionData?.userName || "User"}
               userImage={sessionData?.userImage}
-              appointmentId={sessionData?.appointmentId}
+              appointmentId={sessionData?.instantMeetingId}
               isDoctor={sessionData?.isDoctor || false}
               doctorName={sessionData?.doctorName}
               patientName={sessionData?.patientName}
               onLeave={handleLeave}
+              isInstantMeeting={true}
             />
           </div>
         </div>
@@ -207,7 +218,7 @@ export default function SessionPage() {
       
       {/* Chat Panel */}
       <ChatPanel
-        appointmentId={sessionData?.appointmentId || sessionId}
+        appointmentId={sessionData?.instantMeetingId || roomId}
         currentUserId={sessionData?.userId || ""}
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
@@ -215,7 +226,7 @@ export default function SessionPage() {
       
       {/* Transcription Panel */}
       <TranscriptionPanel
-        appointmentId={sessionData?.appointmentId || sessionId}
+        appointmentId={sessionData?.instantMeetingId || roomId}
         isOpen={isTranscriptionOpen}
         onClose={() => setIsTranscriptionOpen(false)}
       />

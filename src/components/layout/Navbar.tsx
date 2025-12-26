@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, Stethoscope, User, LayoutDashboard, LogOut } from "lucide-react"
+import { Menu, Stethoscope, User, LayoutDashboard, LogOut, Zap } from "lucide-react"
 import { useSession, signOut } from "next-auth/react" // Client side session
 
 import { Button } from "@/components/ui/button"
@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-// Mock Links
+// Navigation Links
 const navigation = [
   { name: "Features", href: "/features" },
   { name: "Doctors", href: "/doctors" },
@@ -73,6 +73,13 @@ export function Navbar() {
               {item.name}
             </Link>
           ))}
+          {/* Instant Consultation - Highlighted */}
+          <Link href="/session/instant">
+            <Button size="sm" variant="outline" className="gap-1.5 border-amber-500/50 text-amber-600 hover:bg-amber-500/10 hover:text-amber-600">
+              <Zap className="h-3.5 w-3.5" />
+              Instant
+            </Button>
+          </Link>
         </nav>
 
         {/* Desktop Actions */}
@@ -154,6 +161,14 @@ export function Navbar() {
                     {item.name}
                   </Link>
                 ))}
+                
+                {/* Instant Consultation in Mobile Menu */}
+                <Link href="/session/instant" className="block">
+                  <Button className="w-full gap-2 bg-amber-500 hover:bg-amber-600">
+                    <Zap className="h-4 w-4" />
+                    Instant Consultation
+                  </Button>
+                </Link>
 
                 <div className="flex flex-col gap-3 mt-4">
                   {session?.user ? (

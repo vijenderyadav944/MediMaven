@@ -50,6 +50,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { endSession } from "@/app/session/actions"
+import { endInstantMeeting } from "@/app/actions/instant-meeting"
 
 interface DailyVideoRoomProps {
   roomName: string
@@ -60,6 +61,7 @@ interface DailyVideoRoomProps {
   doctorName?: string
   patientName?: string
   onLeave: () => void
+  isInstantMeeting?: boolean
 }
 
 type VideoEffect = "none" | "blur" | "gradient"
@@ -72,7 +74,8 @@ export function DailyVideoRoom({
   isDoctor,
   doctorName,
   patientName,
-  onLeave 
+  onLeave,
+  isInstantMeeting = false
 }: DailyVideoRoomProps) {
   const router = useRouter()
   const callRef = useRef<DailyCall | null>(null)
@@ -398,8 +401,13 @@ export function DailyVideoRoom({
     }
 
     if (markAsCompleted && appointmentId) {
-      await endSession(appointmentId)
-      router.push(`/session/${appointmentId}/review`)
+      if (isInstantMeeting) {
+        await endInstantMeeting(appointmentId)
+        router.push(`/session/instant/${appointmentId}/review`)
+      } else {
+        await endSession(appointmentId)
+        router.push(`/session/${appointmentId}/review`)
+      }
     } else if (!markAsCompleted && !isDoctor) {
       router.push("/patient/dashboard")
     } else {
@@ -424,7 +432,7 @@ export function DailyVideoRoom({
   // Pre-join Lobby
   if (showPreJoin) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
         <div className="w-full max-w-4xl">
           {/* Header */}
           <div className="text-center mb-8">
@@ -576,7 +584,7 @@ export function DailyVideoRoom({
 
                 {/* Join Button */}
                 <Button 
-                  className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                  className="w-full h-12 text-lg font-semibold bg-linear-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
                   onClick={joinMeeting}
                   disabled={isPreviewLoading}
                 >
@@ -598,7 +606,7 @@ export function DailyVideoRoom({
   // Error state
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[600px] w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white rounded-xl p-8">
+      <div className="flex flex-col items-center justify-center min-h-150 w-full bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 text-white rounded-xl p-8">
         <div className="bg-red-500/10 text-red-400 p-8 rounded-2xl max-w-md text-center border border-red-500/20 backdrop-blur-sm">
           <div className="h-16 w-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
             <VideoOff className="h-8 w-8" />
@@ -625,12 +633,12 @@ export function DailyVideoRoom({
   // Loading state
   if (isConnecting) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[600px] w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white rounded-xl">
+      <div className="flex flex-col items-center justify-center min-h-150 w-full bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 text-white rounded-xl">
         <div className="relative">
           <div className="absolute inset-0 animate-ping opacity-30">
             <div className="h-24 w-24 rounded-full bg-primary" />
           </div>
-          <div className="relative h-24 w-24 rounded-full bg-gradient-to-r from-primary to-blue-500 flex items-center justify-center">
+          <div className="relative h-24 w-24 rounded-full bg-linear-to-r from-primary to-blue-500 flex items-center justify-center">
             <Loader2 className="h-10 w-10 animate-spin" />
           </div>
         </div>
@@ -650,19 +658,19 @@ export function DailyVideoRoom({
       <div
         ref={containerRef}
         className={cn(
-          "relative w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden",
-          isFullscreen ? "fixed inset-0 z-50" : "min-h-[600px] rounded-2xl",
+          "relative w-full bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden",
+          isFullscreen ? "fixed inset-0 z-50" : "min-h-150 rounded-2xl",
           isMobile && "min-h-screen"
         )}
       >
         {/* Animated Background */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl animate-pulse" />
-          <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-blue-500/10 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+          <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-linear-to-br from-primary/10 to-transparent rounded-full blur-3xl animate-pulse" />
+          <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-linear-to-tr from-blue-500/10 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         </div>
 
         {/* Header Bar */}
-        <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/70 via-black/40 to-transparent p-4 md:p-6">
+        <div className="absolute top-0 left-0 right-0 z-20 bg-linear-to-b from-black/70 via-black/40 to-transparent p-4 md:p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 md:gap-4">
               {/* Recording indicator */}
@@ -776,7 +784,7 @@ export function DailyVideoRoom({
                   <div className="absolute inset-0 animate-ping opacity-20">
                     <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-primary" />
                   </div>
-                  <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center border-4 border-slate-600">
+                  <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full bg-linear-to-br from-slate-700 to-slate-800 flex items-center justify-center border-4 border-slate-600">
                     <Users className="h-16 w-16 md:h-20 md:w-20 text-slate-500" />
                   </div>
                 </div>
@@ -811,7 +819,7 @@ export function DailyVideoRoom({
                 style={{ transform: "scaleX(-1)" }}
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-700 to-slate-800">
+              <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-slate-700 to-slate-800">
                 <Avatar className={cn(isMobile ? "h-12 w-12" : "h-14 w-14")}>
                   <AvatarImage src={userImage} />
                   <AvatarFallback className="bg-primary text-white text-lg">
@@ -834,7 +842,7 @@ export function DailyVideoRoom({
         </div>
 
         {/* Controls Bar */}
-        <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-4 md:p-6">
+        <div className="absolute bottom-0 left-0 right-0 z-20 bg-linear-to-t from-black/80 via-black/50 to-transparent p-4 md:p-6">
           <div className={cn(
             "flex items-center justify-center gap-2 md:gap-3",
             isMobile && "flex-wrap"

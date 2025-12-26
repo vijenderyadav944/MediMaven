@@ -2,6 +2,7 @@
 
 import { auth } from "@/lib/auth"
 import { Appointment } from "@/lib/models/Appointment"
+import { InstantMeeting } from "@/lib/models/InstantMeeting"
 import connectToDatabase from "@/lib/mongoose"
 import { revalidatePath } from "next/cache"
 
@@ -72,7 +73,7 @@ async function callOpenRouter(prompt: string): Promise<string | null> {
   return null
 }
 
-export async function generateMeetingSummary(appointmentId: string, transcription: string) {
+export async function generateMeetingSummary(appointmentId: string, transcription: string, isInstantMeeting: boolean = false) {
   try {
     const session = await auth()
     if (!session?.user) {
@@ -81,26 +82,45 @@ export async function generateMeetingSummary(appointmentId: string, transcriptio
 
     await connectToDatabase()
 
-    const appointment = await Appointment.findById(appointmentId)
-      .populate("doctorId", "name specialty")
-      .populate("patientId", "name")
+    let meeting: any
+    let doctorName: string
+    let doctorSpecialty: string
+    let patientName: string
 
-    if (!appointment) {
-      return { error: "Appointment not found" }
+    if (isInstantMeeting) {
+      meeting = await InstantMeeting.findById(appointmentId)
+        .populate("doctorId", "name specialty")
+        .populate("patientId", "name")
+
+      if (!meeting) {
+        return { error: "Instant meeting not found" }
+      }
+
+      doctorName = (meeting.doctorId as any)?.name || "Doctor"
+      doctorSpecialty = (meeting.doctorId as any)?.specialty || meeting.specialty || "General Medicine"
+      patientName = (meeting.patientId as any)?.name || "Patient"
+    } else {
+      meeting = await Appointment.findById(appointmentId)
+        .populate("doctorId", "name specialty")
+        .populate("patientId", "name")
+
+      if (!meeting) {
+        return { error: "Appointment not found" }
+      }
+
+      doctorName = (meeting.doctorId as any)?.name || "Doctor"
+      doctorSpecialty = (meeting.doctorId as any)?.specialty || "General Medicine"
+      patientName = (meeting.patientId as any)?.name || "Patient"
     }
 
-    // Verify user is part of this appointment
+    // Verify user is part of this meeting
     const userId = session.user.id
-    const patientIdStr = (appointment.patientId as any)?._id?.toString()
-    const doctorIdStr = (appointment.doctorId as any)?._id?.toString()
+    const patientIdStr = (meeting.patientId as any)?._id?.toString()
+    const doctorIdStr = (meeting.doctorId as any)?._id?.toString()
 
     if (patientIdStr !== userId && doctorIdStr !== userId) {
       return { error: "Unauthorized" }
     }
-
-    const doctorName = (appointment.doctorId as any)?.name || "Doctor"
-    const doctorSpecialty = (appointment.doctorId as any)?.specialty || "General Medicine"
-    const patientName = (appointment.patientId as any)?.name || "Patient"
 
     // Generate English summary
     const englishPrompt = `
@@ -148,16 +168,20 @@ Please provide the complete Hindi translation now:
 
     const hindiSummary = await callOpenRouter(hindiPrompt)
 
-    // Save to appointment
-    appointment.transcription = transcription
-    appointment.summary = {
+    // Save to meeting/appointment
+    meeting.transcription = transcription
+    meeting.summary = {
       english: englishSummary,
       hindi: hindiSummary || "हिंदी अनुवाद उपलब्ध नहीं है। कृपया अंग्रेजी सारांश देखें।",
       generatedAt: new Date()
     }
-    await appointment.save()
+    await meeting.save()
 
-    revalidatePath(`/session/${appointmentId}/review`)
+    if (isInstantMeeting) {
+      revalidatePath(`/session/instant/${appointmentId}/review`)
+    } else {
+      revalidatePath(`/session/${appointmentId}/review`)
+    }
 
     return { 
       success: true, 
@@ -181,17 +205,30 @@ export async function saveTranscription(appointmentId: string, transcription: st
 
     await connectToDatabase()
 
+    // First try to find as a regular appointment
     const appointment = await Appointment.findById(appointmentId)
-    if (!appointment) {
-      return { error: "Appointment not found" }
+    
+    if (appointment) {
+      // Append to existing transcription
+      const existingTranscription = appointment.transcription || ""
+      appointment.transcription = existingTranscription + (existingTranscription ? "\n" : "") + transcription
+      await appointment.save()
+      return { success: true }
     }
 
-    // Append to existing transcription
-    const existingTranscription = appointment.transcription || ""
-    appointment.transcription = existingTranscription + (existingTranscription ? "\n" : "") + transcription
-    await appointment.save()
+    // If not found as appointment, try as instant meeting
+    const { InstantMeeting } = await import("@/lib/models/InstantMeeting")
+    const instantMeeting = await InstantMeeting.findById(appointmentId)
+    
+    if (instantMeeting) {
+      // Append to existing transcription
+      const existingTranscription = instantMeeting.transcription || ""
+      instantMeeting.transcription = existingTranscription + (existingTranscription ? "\n" : "") + transcription
+      await instantMeeting.save()
+      return { success: true }
+    }
 
-    return { success: true }
+    return { error: "Appointment or instant meeting not found" }
   } catch (error) {
     console.error("Error saving transcription:", error)
     return { error: "Failed to save transcription" }

@@ -120,6 +120,39 @@ export async function getSpecialties() {
   }
 }
 
+// Get price ranges for all specialties (dynamic, from actual doctor data)
+export async function getSpecialtyPriceRanges(): Promise<{ name: string; minPrice: number; maxPrice: number }[]> {
+  try {
+    await connectToDatabase()
+
+    // Aggregate to get min/max prices per specialty
+    const priceRanges = await User.aggregate([
+      { $match: { role: "doctor", specialty: { $exists: true, $ne: null } } },
+      {
+        $group: {
+          _id: "$specialty",
+          minPrice: { $min: { $ifNull: ["$doctorProfile.price", 500] } },
+          maxPrice: { $max: { $ifNull: ["$doctorProfile.price", 500] } }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          name: "$_id",
+          minPrice: 1,
+          maxPrice: 1
+        }
+      },
+      { $sort: { name: 1 } }
+    ])
+
+    return priceRanges
+  } catch (error) {
+    console.error("Error fetching specialty price ranges:", error)
+    return []
+  }
+}
+
 // Get booked slots for a doctor on a specific date
 export async function getBookedSlots(doctorId: string, date: Date) {
   try {
