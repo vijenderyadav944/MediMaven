@@ -54,7 +54,7 @@ export function SecurePaymentForm({ amount, onSuccess }: PaymentFormProps) {
           disabled={isProcessing}
         >
           {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Simulate Pay ${amount}
+          Simulate Pay ₹{amount}
         </Button>
       </div>
     )

@@ -23,11 +23,12 @@ export async function getSessionDetails(sessionId: string) {
     // Check if sessionId is an appointment ID or a room ID
     let appointment = null
     
-    // Try to find by appointment ID first
-    if (sessionId.length === 24) {
+    // Try to find by appointment ID first (must be 24 char hex string for ObjectId)
+    const isValidObjectId = sessionId.length === 24 && /^[0-9a-fA-F]{24}$/.test(sessionId)
+    if (isValidObjectId) {
       appointment = await Appointment.findById(sessionId)
         .populate("doctorId", "name email image specialty")
-        .populate("patientId", "name email image")
+        .populate("patientId", "name email image healthProfile")
         .lean()
     }
     
@@ -35,7 +36,7 @@ export async function getSessionDetails(sessionId: string) {
     if (!appointment) {
       appointment = await Appointment.findOne({ meetingLink: { $regex: sessionId } })
         .populate("doctorId", "name email image specialty")
-        .populate("patientId", "name email image")
+        .populate("patientId", "name email image healthProfile")
         .lean()
     }
 
@@ -71,9 +72,11 @@ export async function getSessionDetails(sessionId: string) {
       roomUrl: appointment.meetingLink || `room-${appointment._id}`,
       sessionId: appointment._id.toString(),
       appointmentId: appointment._id.toString(),
+      userId: userId,
       userName: session.user.name || "User",
       doctorName: (appointment.doctorId as any)?.name || "Doctor",
       patientName: (appointment.patientId as any)?.name || "Patient",
+      patientHealthProfile: isDoctor ? (appointment.patientId as any)?.healthProfile : undefined,
       specialty: (appointment.doctorId as any)?.specialty,
       duration: appointment.duration || 30,
       scheduledDate: appointment.date,

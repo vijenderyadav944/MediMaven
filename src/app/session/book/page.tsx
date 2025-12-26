@@ -125,7 +125,7 @@ function BookAppointmentContent() {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Amount Paid</span>
-              <span className="font-medium">${doctor.price}</span>
+              <span className="font-medium">₹{doctor.price}</span>
             </div>
           </div>
           <Button onClick={() => router.push("/patient/dashboard")} className="w-full">
@@ -164,7 +164,7 @@ function BookAppointmentContent() {
               <div className="space-y-4 pt-4 border-t">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Consultation Fee</span>
-                  <span className="font-bold">${doctor.price}</span>
+                  <span className="font-bold">₹{doctor.price}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Duration</span>

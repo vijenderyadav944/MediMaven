@@ -44,7 +44,7 @@ export async function getDoctorAppointments() {
     await connectToDatabase()
 
     const appointments = await Appointment.find({ doctorId: session.user.id })
-      .populate("patientId", "name email image")
+      .populate("patientId", "name email image gender dob healthProfile")
       .sort({ date: 1 })
       .lean()
 
@@ -294,41 +294,6 @@ export async function rateAppointment(appointmentId: string, rating: number, rev
   }
 }
 
-// Get appointment by ID
-export async function getAppointmentById(appointmentId: string) {
-  try {
-    const session = await auth()
-    if (!session?.user) {
-      return null
-    }
-
-    await connectToDatabase()
-
-    const appointment = await Appointment.findById(appointmentId)
-      .populate("doctorId", "name email specialty image")
-      .populate("patientId", "name email image")
-      .lean()
-
-    if (!appointment) {
-      return null
-    }
-
-    // Verify user has access - handle both populated and non-populated cases
-    const userId = session.user.id
-    const patientIdStr = (appointment.patientId as any)?._id?.toString() || appointment.patientId?.toString()
-    const doctorIdStr = (appointment.doctorId as any)?._id?.toString() || appointment.doctorId?.toString()
-
-    if (patientIdStr !== userId && doctorIdStr !== userId) {
-      return null
-    }
-
-    return serialize(appointment)
-  } catch (error) {
-    console.error("Failed to fetch appointment:", error)
-    return null
-  }
-}
-
 // For testing purposes - Seed some data if needed
 export async function seedTestAppointment(doctorId: string) {
   const session = await auth()
@@ -403,6 +368,7 @@ export async function getAvailableSlots(doctorId: string, dateStr: string) {
 
     // 4. Generate All Possible Slots
     const slots = []
+    const now = new Date()
 
     const [startHour, startMin] = availability.startTime.split(':').map(Number)
     const [endHour, endMin] = availability.endTime.split(':').map(Number)
@@ -418,22 +384,20 @@ export async function getAvailableSlots(doctorId: string, dateStr: string) {
     while (currentSlot.getTime() + durationMs <= endTime.getTime()) {
       const slotEnd = new Date(currentSlot.getTime() + durationMs)
 
-      // Check Overlap
+      // Skip past time slots - only show future slots (with 15 min buffer)
+      const isInPast = currentSlot.getTime() < now.getTime() + 15 * 60 * 1000
+
+      // Check Overlap with existing appointments
       const isBlocked = existingAppointments.some((appt) => {
         const apptStart = new Date(appt.date)
         const apptEnd = new Date(apptStart.getTime() + (appt.duration * 60 * 1000))
         return isOverlapping(currentSlot, slotEnd, apptStart, apptEnd)
       })
 
-      if (!isBlocked) {
+      if (!isBlocked && !isInPast) {
         slots.push(currentSlot.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }))
       }
 
-      // Move to next slot 
-      // For better availability, we could increment by e.g. 10 mins instead of full duration
-      // But to prevent fragmentation, standard logic increments by duration.
-      // User asked "Providing the time slot of 10 min", implies dynamic start?
-      // Let's increment by duration for now to keep slots aligned.
       currentSlot = new Date(currentSlot.getTime() + durationMs)
     }
 
@@ -442,5 +406,118 @@ export async function getAvailableSlots(doctorId: string, dateStr: string) {
   } catch (error) {
     console.error("Error getting slots:", error)
     return []
+  }
+}
+
+// Get patient health profile for doctor view
+export async function getPatientHealthProfile(patientId: string) {
+  try {
+    const session = await auth()
+    if (!session?.user) {
+      return null
+    }
+
+    await connectToDatabase()
+
+    // Verify the requester is a doctor who has an appointment with this patient
+    const hasAppointment = await Appointment.findOne({
+      doctorId: session.user.id,
+      patientId: patientId
+    })
+
+    if (!hasAppointment && (session.user as any).role !== "admin") {
+      return null
+    }
+
+    const patient = await User.findById(patientId)
+      .select("name email gender dob healthProfile medicalHistory image")
+      .lean()
+
+    if (!patient) return null
+
+    return serialize(patient)
+  } catch (error) {
+    console.error("Error fetching patient profile:", error)
+    return null
+  }
+}
+
+// Submit review for an appointment
+export async function submitReview(appointmentId: string, rating: number, review: string) {
+  try {
+    const session = await auth()
+    if (!session?.user) {
+      return { error: "Not authenticated" }
+    }
+
+    await connectToDatabase()
+
+    const appointment = await Appointment.findById(appointmentId)
+    if (!appointment) {
+      return { error: "Appointment not found" }
+    }
+
+    // Only the patient can submit a review
+    if (appointment.patientId.toString() !== session.user.id) {
+      return { error: "Only the patient can submit a review" }
+    }
+
+    // Only completed appointments can be reviewed
+    if (appointment.status !== "completed") {
+      return { error: "Only completed appointments can be reviewed" }
+    }
+
+    // Validate rating
+    if (rating < 1 || rating > 5) {
+      return { error: "Rating must be between 1 and 5" }
+    }
+
+    appointment.rating = rating
+    appointment.review = review
+    await appointment.save()
+
+    revalidatePath("/patient/dashboard")
+    revalidatePath("/doctor/dashboard")
+    revalidatePath(`/doctors/${appointment.doctorId}`)
+
+    return { success: true }
+  } catch (error) {
+    console.error("Failed to submit review:", error)
+    return { error: "Failed to submit review" }
+  }
+}
+
+// Get appointment by ID
+export async function getAppointmentById(appointmentId: string) {
+  try {
+    const session = await auth()
+    if (!session?.user) return null
+
+    await connectToDatabase()
+
+    const appointment = await Appointment.findById(appointmentId)
+      .populate("patientId", "name email image healthProfile gender dob")
+      .populate("doctorId", "name email specialty image")
+      .lean()
+
+    if (!appointment) return null
+
+    // Verify user is part of this appointment - handle both populated and non-populated cases
+    const userId = session.user.id
+    const patientIdStr = (appointment.patientId as any)?._id?.toString() || appointment.patientId?.toString()
+    const doctorIdStr = (appointment.doctorId as any)?._id?.toString() || appointment.doctorId?.toString()
+    
+    if (
+      patientIdStr !== userId &&
+      doctorIdStr !== userId &&
+      (session.user as any).role !== "admin"
+    ) {
+      return null
+    }
+
+    return serialize(appointment)
+  } catch (error) {
+    console.error("Error fetching appointment:", error)
+    return null
   }
 }

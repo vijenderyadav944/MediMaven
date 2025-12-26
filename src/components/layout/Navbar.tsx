@@ -83,7 +83,14 @@ export function Navbar() {
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={session.user.image || ""} alt={session.user.name || ""} />
-                    <AvatarFallback>{session.user.name?.[0]?.toUpperCase()}</AvatarFallback>
+                    <AvatarFallback>
+                      {(() => {
+                        const name = session.user.name || ""
+                        // Skip "Dr." prefix to get the actual first letter
+                        const cleanName = name.replace(/^Dr\.?\s*/i, "")
+                        return cleanName[0]?.toUpperCase() || name[0]?.toUpperCase() || "U"
+                      })()}
+                    </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>

@@ -4,10 +4,12 @@ import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
 import { getSessionDetails } from "@/app/session/actions"
 import { VideoRoom } from "@/components/video/VideoRoom"
+import { ChatPanel } from "@/components/video/ChatPanel"
+import { PatientHealthCard } from "@/components/video/PatientHealthCard"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, ArrowLeft, Shield, Video, Clock, User } from "lucide-react"
+import { Loader2, ArrowLeft, Shield, Video, Clock, User, MessageCircle, FileHeart } from "lucide-react"
 
 export default function SessionPage() {
   const router = useRouter()
@@ -18,6 +20,8 @@ export default function SessionPage() {
   const [isLoading, setIsLoading] = React.useState(true)
   const [hasJoined, setHasJoined] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [isChatOpen, setIsChatOpen] = React.useState(false)
+  const [isHealthPanelOpen, setIsHealthPanelOpen] = React.useState(false)
 
   React.useEffect(() => {
     const loadSession = async () => {
@@ -138,36 +142,77 @@ export default function SessionPage() {
 
   // Video Room
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-6xl">
-        <div className="mb-4 flex items-center justify-between text-white">
-          <Button 
-            variant="ghost" 
-            className="text-white hover:text-white/80" 
-            onClick={() => setHasJoined(false)}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Lobby
-          </Button>
-          <div className="flex items-center gap-3">
-            <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
-              <Shield className="h-3 w-3 mr-1" />
-              Secure Connection
-            </Badge>
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 bg-red-500 rounded-full animate-pulse"></span>
-              <span className="font-mono text-sm">LIVE</span>
+    <div className="min-h-screen bg-black flex">
+      {/* Patient Health Panel - Only visible for doctors */}
+      {sessionData?.isDoctor && isHealthPanelOpen && (
+        <div className="w-80 h-screen p-4 border-r border-neutral-700 overflow-y-auto">
+          <PatientHealthCard
+            patientName={sessionData?.patientName || "Patient"}
+            healthProfile={sessionData?.patientHealthProfile}
+          />
+        </div>
+      )}
+      
+      <div className="flex-1 flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-6xl">
+          <div className="mb-4 flex items-center justify-between text-white">
+            <Button 
+              variant="ghost" 
+              className="text-white hover:text-white/80" 
+              onClick={() => setHasJoined(false)}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Lobby
+            </Button>
+            <div className="flex items-center gap-3">
+              {/* Patient Health button - only for doctors */}
+              {sessionData?.isDoctor && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-neutral-600 bg-neutral-800 text-white hover:bg-neutral-700"
+                  onClick={() => setIsHealthPanelOpen(!isHealthPanelOpen)}
+                >
+                  <FileHeart className="h-4 w-4 mr-2" />
+                  Patient Info
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-neutral-600 bg-neutral-800 text-white hover:bg-neutral-700"
+                onClick={() => setIsChatOpen(!isChatOpen)}
+              >
+                <MessageCircle className="h-4 w-4 mr-2" />
+                Chat
+              </Button>
+              <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
+                <Shield className="h-3 w-3 mr-1" />
+                Secure Connection
+              </Badge>
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 bg-red-500 rounded-full animate-pulse"></span>
+                <span className="font-mono text-sm">LIVE</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <VideoRoom
-          url={sessionData?.roomUrl || `room-${sessionId}`}
-          roomId={sessionId}
-          userName={sessionData?.userName || "User"}
-          appointmentId={sessionData?.appointmentId}
-          onLeave={handleLeave}
-        />
+          <VideoRoom
+            url={sessionData?.roomUrl || `room-${sessionId}`}
+            roomId={sessionId}
+            userName={sessionData?.userName || "User"}
+            appointmentId={sessionData?.appointmentId}
+            onLeave={handleLeave}
+          />
+        </div>
       </div>
+      
+      {/* Chat Panel */}
+      <ChatPanel
+        appointmentId={sessionData?.appointmentId || sessionId}
+        currentUserId={sessionData?.userId || ""}
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+      />
     </div>
   )
 }

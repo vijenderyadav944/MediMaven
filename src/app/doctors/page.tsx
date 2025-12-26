@@ -114,7 +114,7 @@ export default function DoctorsPage() {
                         </Avatar>
                       </div>
                       <div className="mt-4 text-right">
-                        <span className="text-lg font-bold text-primary">${doctor.price}</span>
+                        <span className="text-lg font-bold text-primary">₹{doctor.price}</span>
                         <span className="text-xs text-muted-foreground block">per visit</span>
                       </div>
                     </div>

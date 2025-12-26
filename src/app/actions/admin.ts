@@ -110,3 +110,118 @@ export async function getAdminStats() {
     }
   }
 }
+
+// Get all doctors for admin
+export async function getAllDoctors() {
+  try {
+    const session = await auth()
+    if (!session?.user || (session.user as any).role !== "admin") {
+      return []
+    }
+
+    await connectToDatabase()
+
+    const doctors = await User.find({ role: "doctor" })
+      .select("name email specialty image bio doctorProfile createdAt")
+      .lean()
+
+    return JSON.parse(JSON.stringify(doctors.map(d => ({
+      ...d,
+      id: d._id.toString()
+    }))))
+  } catch (error) {
+    console.error("Error fetching doctors:", error)
+    return []
+  }
+}
+
+// Update doctor details by admin
+export async function updateDoctor(doctorId: string, data: {
+  name?: string;
+  email?: string;
+  specialty?: string;
+  bio?: string;
+  image?: string;
+  price?: number;
+  consultationDuration?: number;
+  qualifications?: string[];
+  experience?: number;
+  availability?: {
+    days: string[];
+    startTime: string;
+    endTime: string;
+  };
+}) {
+  try {
+    const session = await auth()
+    if (!session?.user || (session.user as any).role !== "admin") {
+      return { error: "Unauthorized" }
+    }
+
+    await connectToDatabase()
+
+    const doctor = await User.findById(doctorId)
+    if (!doctor || doctor.role !== "doctor") {
+      return { error: "Doctor not found" }
+    }
+
+    // Update basic fields
+    if (data.name) doctor.name = data.name
+    if (data.email) doctor.email = data.email
+    if (data.specialty) doctor.specialty = data.specialty
+    if (data.bio) doctor.bio = data.bio
+    if (data.image) doctor.image = data.image
+
+    // Update doctorProfile fields
+    if (!doctor.doctorProfile) {
+      doctor.doctorProfile = {
+        price: 500,
+        consultationDuration: 30,
+        qualifications: [],
+        experience: 0,
+        availability: {
+          days: ["Mon", "Tue", "Wed", "Thu", "Fri"],
+          startTime: "09:00",
+          endTime: "17:00"
+        }
+      }
+    }
+
+    if (data.price !== undefined) doctor.doctorProfile.price = data.price
+    if (data.consultationDuration !== undefined) doctor.doctorProfile.consultationDuration = data.consultationDuration
+    if (data.qualifications) doctor.doctorProfile.qualifications = data.qualifications
+    if (data.experience !== undefined) doctor.doctorProfile.experience = data.experience
+    if (data.availability) doctor.doctorProfile.availability = data.availability
+
+    await doctor.save()
+
+    revalidatePath("/admin/dashboard")
+    revalidatePath(`/doctors/${doctorId}`)
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error updating doctor:", error)
+    return { error: "Failed to update doctor" }
+  }
+}
+
+// Delete a doctor
+export async function deleteDoctor(doctorId: string) {
+  try {
+    const session = await auth()
+    if (!session?.user || (session.user as any).role !== "admin") {
+      return { error: "Unauthorized" }
+    }
+
+    await connectToDatabase()
+
+    await User.findByIdAndDelete(doctorId)
+
+    revalidatePath("/admin/dashboard")
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error deleting doctor:", error)
+    return { error: "Failed to delete doctor" }
+  }
+}

@@ -21,8 +21,6 @@ export async function searchDoctors(query: string = "", specialty: string = "all
     }
 
     if (specialty && specialty !== "all") {
-      // If specific specialty matches, override regex specialty search or combine?
-      // Simple approach: strict match if provided via dropdown
       filter.specialty = { $regex: specialty, $options: "i" }
     }
 
@@ -30,17 +28,31 @@ export async function searchDoctors(query: string = "", specialty: string = "all
       .select("name specialty image _id bio doctorProfile")
       .lean()
 
-    // Mock price/location/rating for now as they are not on User model yet
-    // In future, these should optionally be added to User or a DoctorProfile model
-    const doctorsWithExtras = doctors.map(doc => ({
-      ...doc,
-      id: doc._id.toString(),
-      rating: 5.0, // Default for now
-      reviews: 0,
-      price: (doc as any).doctorProfile?.price || 50,
-      location: "Online",
-      availability: "Available Today"
-    }))
+    // Get ratings for all doctors
+    const doctorIds = doctors.map(d => d._id)
+    const { Appointment } = await import("@/lib/models/Appointment")
+    const mongoose = await import("mongoose")
+    
+    const ratingsData = await Appointment.aggregate([
+      { $match: { doctorId: { $in: doctorIds }, rating: { $exists: true, $ne: null } } },
+      { $group: { _id: "$doctorId", avgRating: { $avg: "$rating" }, count: { $sum: 1 } } }
+    ])
+    
+    const ratingsMap = new Map(ratingsData.map(r => [r._id.toString(), { rating: r.avgRating, count: r.count }]))
+
+    const doctorsWithExtras = doctors.map(doc => {
+      const ratingInfo = ratingsMap.get(doc._id.toString()) || { rating: 5.0, count: 0 }
+      return {
+        ...doc,
+        id: doc._id.toString(),
+        rating: Number(ratingInfo.rating.toFixed(1)),
+        reviews: ratingInfo.count,
+        price: (doc as any).doctorProfile?.price || 500,
+        consultationDuration: (doc as any).doctorProfile?.consultationDuration || 30,
+        location: "Online",
+        availability: "Available Today"
+      }
+    })
 
     return serialize(doctorsWithExtras)
 
@@ -56,29 +68,35 @@ export async function getDoctorById(doctorId: string) {
     await connectToDatabase()
 
     const doctor = await User.findById(doctorId)
-      .select("name specialty image bio email")
+      .select("name specialty image bio email doctorProfile role")
       .lean()
 
     if (!doctor || (doctor as any).role === "patient") {
       return null
     }
 
-    // Add extra fields
+    // Add extra fields from doctorProfile
     const doctorProfile = (doctor as any).doctorProfile || {}
 
-    // Calculate rating from appointments later, for now mock or simple aggregation if available
-    // For MVP we can still use mock rating until review system is fully connected
+    // Calculate average rating from completed appointments with ratings
+    const ratingResult = await (await import("@/lib/models/Appointment")).Appointment.aggregate([
+      { $match: { doctorId: new (await import("mongoose")).default.Types.ObjectId(doctorId), rating: { $exists: true, $ne: null } } },
+      { $group: { _id: null, avgRating: { $avg: "$rating" }, count: { $sum: 1 } } }
+    ])
+    
+    const averageRating = ratingResult[0]?.avgRating || 0
+    const reviewCount = ratingResult[0]?.count || 0
 
     const doctorWithExtras = {
       ...doctor,
       id: (doctor as any)._id.toString(),
-      rating: 5.0,
-      reviews: 0,
-      price: doctorProfile.price || 50,
+      rating: Number(averageRating.toFixed(1)) || 5.0,
+      reviews: reviewCount,
+      price: doctorProfile.price || 500,
       consultationDuration: doctorProfile.consultationDuration || 30,
       qualifications: doctorProfile.qualifications || [],
       experience: doctorProfile.experience || 0,
-      location: "Online", // Or add to profile
+      location: "Online",
       availability: doctorProfile.availability || { days: [], startTime: "09:00", endTime: "17:00" }
     }
 

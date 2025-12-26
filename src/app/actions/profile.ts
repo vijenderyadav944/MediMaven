@@ -23,14 +23,30 @@ export async function updateDoctorProfile(data: any) {
 
     await connectToDatabase()
 
+    // Safely parse numbers, defaulting to undefined if NaN
+    const parseNumber = (val: any) => {
+      const num = Number(val)
+      return isNaN(num) ? undefined : num
+    }
+
     // Update top-level fields
     const updateData: any = {
       bio: data.bio,
       specialty: data.specialty,
-      "doctorProfile.price": Number(data.price),
-      "doctorProfile.consultationDuration": Number(data.consultationDuration),
-      "doctorProfile.qualifications": data.qualifications ? data.qualifications.split(",").map((q: string) => q.trim()) : [],
-      "doctorProfile.experience": Number(data.experience),
+    }
+
+    // Only add numeric fields if they are valid numbers
+    const price = parseNumber(data.price)
+    if (price !== undefined) updateData["doctorProfile.price"] = price
+
+    const duration = parseNumber(data.consultationDuration)
+    if (duration !== undefined) updateData["doctorProfile.consultationDuration"] = duration
+
+    const experience = parseNumber(data.experience)
+    if (experience !== undefined) updateData["doctorProfile.experience"] = experience
+
+    if (data.qualifications) {
+      updateData["doctorProfile.qualifications"] = data.qualifications.split(",").map((q: string) => q.trim())
     }
 
     // Availability

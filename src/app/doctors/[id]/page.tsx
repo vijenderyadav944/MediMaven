@@ -54,7 +54,7 @@ export default async function DoctorProfilePage(props: { params: Promise<{ id: s
               <div className="space-y-2 pt-4 border-t">
                 <div className="flex items-center gap-2 text-sm">
                   <DollarSign className="h-4 w-4 text-primary" />
-                  <span className="font-medium">${doctor.price} / Visit</span>
+                  <span className="font-medium">₹{doctor.price} / Visit</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Clock className="h-4 w-4 text-primary" />

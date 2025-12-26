@@ -17,16 +17,26 @@ import { Loader2, ArrowRight, ArrowLeft, Check } from "lucide-react"
 type FormData = {
   gender: string
   dob: string
+  bloodGroup: string
   allergies: string
   medications: string
+  chronicConditions: string
+  emergencyContactName: string
+  emergencyContactRelation: string
+  emergencyContactPhone: string
   symptoms: string[]
 }
 
 const INITIAL_DATA: FormData = {
   gender: "",
   dob: "",
+  bloodGroup: "",
   allergies: "",
   medications: "",
+  chronicConditions: "",
+  emergencyContactName: "",
+  emergencyContactRelation: "",
+  emergencyContactPhone: "",
   symptoms: [],
 }
 
@@ -49,22 +59,29 @@ export function OnboardingWizard() {
     if (step < 3) {
       setStep(prev => prev + 1)
     } else {
-      // Submit
+      // Submit with structured health profile
       setIsSubmitting(true)
       const res = await completeOnboarding({
         gender: data.gender,
         dob: new Date(data.dob),
-        medicalHistory: [
-          data.allergies ? `Allergies: ${data.allergies}` : "",
-          data.medications ? `Meds: ${data.medications}` : "",
-          ...data.symptoms
-        ].filter(Boolean)
+        healthProfile: {
+          bloodGroup: data.bloodGroup,
+          allergies: data.allergies.split(',').map(s => s.trim()).filter(Boolean),
+          chronicConditions: data.chronicConditions.split(',').map(s => s.trim()).filter(Boolean),
+          medications: data.medications.split(',').map(s => s.trim()).filter(Boolean),
+          emergencyContact: {
+            name: data.emergencyContactName,
+            relation: data.emergencyContactRelation,
+            phone: data.emergencyContactPhone
+          }
+        },
+        medicalHistory: data.symptoms // Current symptoms as medical history
       })
 
       if (res.success) {
-        router.push("/dashboard") // Will create dashboard next
+        router.push("/dashboard")
       } else {
-        alert("Something went wrong. Please try again.") // Simple error handling
+        alert("Something went wrong. Please try again.")
         setIsSubmitting(false)
       }
     }
@@ -93,7 +110,7 @@ export function OnboardingWizard() {
         </div>
       </div>
 
-      <Card className="min-h-[400px] shadow-lg border-border/50 relative overflow-hidden">
+      <Card className="min-h-100 shadow-lg border-border/50 relative overflow-hidden">
         <CardContent className="p-6 md:p-8">
           <AnimatePresence mode="wait">
             {step === 1 && (
@@ -120,7 +137,7 @@ export function OnboardingWizard() {
             <Button
               onClick={handleNext}
               disabled={isSubmitting}
-              className="gap-2 min-w-[120px]"
+              className="gap-2 min-w-30"
             >
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               {step === 3 ? "Complete" : "Continue"}
@@ -154,6 +171,27 @@ function StepOne({ data, updateFields }: { data: FormData, updateFields: (f: Par
             value={data.dob}
             onChange={e => updateFields({ dob: e.target.value })}
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Blood Group</Label>
+          <RadioGroup
+            value={data.bloodGroup}
+            onValueChange={val => updateFields({ bloodGroup: val })}
+            className="grid grid-cols-4 gap-2"
+          >
+            {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map(bg => (
+              <div key={bg}>
+                <RadioGroupItem value={bg} id={bg} className="peer sr-only" />
+                <Label
+                  htmlFor={bg}
+                  className="flex items-center justify-center rounded-md border-2 border-muted bg-popover p-2 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary transition-all cursor-pointer text-sm"
+                >
+                  {bg}
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
         </div>
 
         <div className="space-y-2">
@@ -203,21 +241,61 @@ function StepTwo({ data, updateFields }: { data: FormData, updateFields: (f: Par
 
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Known Allergies</Label>
+          <Label>Known Allergies (comma separated)</Label>
           <Textarea
-            placeholder="Peanuts, Penicillin, etc. (Leave blank if none)"
+            placeholder="Peanuts, Penicillin, Dust, etc. (Leave blank if none)"
             value={data.allergies}
             onChange={e => updateFields({ allergies: e.target.value })}
           />
         </div>
 
         <div className="space-y-2">
-          <Label>Current Medications</Label>
+          <Label>Chronic Conditions (comma separated)</Label>
           <Textarea
-            placeholder="List any medications you are currently taking..."
+            placeholder="Diabetes, Hypertension, Asthma, etc. (Leave blank if none)"
+            value={data.chronicConditions}
+            onChange={e => updateFields({ chronicConditions: e.target.value })}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Current Medications (comma separated)</Label>
+          <Textarea
+            placeholder="Metformin, Amlodipine, etc. (Leave blank if none)"
             value={data.medications}
             onChange={e => updateFields({ medications: e.target.value })}
           />
+        </div>
+
+        <div className="border-t pt-4 mt-4">
+          <h3 className="font-semibold mb-3">Emergency Contact</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Name</Label>
+              <Input
+                placeholder="Contact name"
+                value={data.emergencyContactName}
+                onChange={e => updateFields({ emergencyContactName: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Relation</Label>
+              <Input
+                placeholder="e.g., Spouse, Parent"
+                value={data.emergencyContactRelation}
+                onChange={e => updateFields({ emergencyContactRelation: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Phone</Label>
+              <Input
+                type="tel"
+                placeholder="+91 9876543210"
+                value={data.emergencyContactPhone}
+                onChange={e => updateFields({ emergencyContactPhone: e.target.value })}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </motion.div>

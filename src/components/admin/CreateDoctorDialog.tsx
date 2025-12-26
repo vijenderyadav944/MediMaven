@@ -45,7 +45,7 @@ export function CreateDoctorDialog() {
           Add New Doctor
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-106.25">
         <DialogHeader>
           <DialogTitle>Add New Doctor</DialogTitle>
           <DialogDescription>

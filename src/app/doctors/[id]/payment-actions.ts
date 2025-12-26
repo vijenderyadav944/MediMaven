@@ -28,8 +28,8 @@ export async function processPayment(amount: number, sourceId: string) {
     await connectToDatabase()
 
     // 1. Create Payment with Square API
-    // Amount is in cents/lowest denomination for the currency.
-    // We assume input 'amount' is in DOLLARS and convert to CENTS.
+    // Amount is in lowest denomination (paise for INR)
+    // We assume input 'amount' is in Rupees and convert to paise.
 
     // SAFEGUARD: Ensure amount is a number
     const amountMoney = BigInt(Math.round(amount * 100));
@@ -39,7 +39,7 @@ export async function processPayment(amount: number, sourceId: string) {
       idempotencyKey: randomUUID(),
       amountMoney: {
         amount: amountMoney,
-        currency: "USD", // Adjust currency if needed or make dynamic
+        currency: "INR", // Indian Rupees
       },
     });
 

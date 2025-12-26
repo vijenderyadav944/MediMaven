@@ -69,7 +69,7 @@ export default function ReviewPage(props: { params: Promise<{ id: string }> }) {
             placeholder="Write a review (optional)..."
             value={review}
             onChange={(e) => setReview(e.target.value)}
-            className="min-h-[100px]"
+            className="min-h-25"
           />
 
           <Button
