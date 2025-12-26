@@ -3,14 +3,14 @@
 import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
 import { getSessionDetails } from "@/app/session/actions"
-import { VideoRoom } from "@/components/video/VideoRoom"
+import { DailyVideoRoom } from "@/components/video/DailyVideoRoom"
 import { ChatPanel } from "@/components/video/ChatPanel"
 import { PatientHealthCard } from "@/components/video/PatientHealthCard"
 import { TranscriptionPanel } from "@/components/video/TranscriptionPanel"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, ArrowLeft, Shield, Video, Clock, User, MessageCircle, FileHeart, FileText } from "lucide-react"
+import { Loader2, ArrowLeft, Shield, Video, Clock, User, MessageCircle, FileHeart, FileText, CheckCircle2 } from "lucide-react"
 
 export default function SessionPage() {
   const router = useRouter()
@@ -75,10 +75,62 @@ export default function SessionPage() {
     )
   }
 
+  // Meeting already completed
+  if (sessionData?.isCompleted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-neutral-900 via-neutral-800 to-black flex items-center justify-center p-4">
+        <Card className="max-w-lg w-full border-neutral-700 bg-neutral-900/80 backdrop-blur">
+          <CardHeader className="text-center pb-2">
+            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-green-500/20 flex items-center justify-center">
+              <CheckCircle2 className="h-8 w-8 text-green-500" />
+            </div>
+            <CardTitle className="text-2xl text-white">Session Completed</CardTitle>
+            <CardDescription className="text-neutral-400">
+              This consultation has already been completed.
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="space-y-6">
+            <div className="space-y-3 p-4 bg-neutral-800/50 rounded-lg border border-neutral-700">
+              {sessionData?.doctorName && (
+                <div className="flex items-center gap-3 text-neutral-300">
+                  <User className="h-4 w-4 text-primary" />
+                  <span className="text-sm">
+                    {sessionData.isDoctor ? `Patient: ${sessionData.patientName}` : `Doctor: ${sessionData.doctorName}`}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex flex-col gap-3">
+              {sessionData?.isPatient && (
+                <Button 
+                  size="lg" 
+                  className="w-full h-12"
+                  onClick={() => router.push(`/session/${sessionData.appointmentId}/review`)}
+                >
+                  View Review & Summary
+                </Button>
+              )}
+              <Button 
+                variant="ghost" 
+                className="text-neutral-400 hover:text-white"
+                onClick={() => router.push("/dashboard")}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Return to Dashboard
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   // Pre-call lobby
   if (!hasJoined) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-neutral-900 via-neutral-800 to-black flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-neutral-900 via-neutral-800 to-black flex items-center justify-center p-4">
         <Card className="max-w-lg w-full border-neutral-700 bg-neutral-900/80 backdrop-blur">
           <CardHeader className="text-center pb-2">
             <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center">
@@ -208,11 +260,11 @@ export default function SessionPage() {
             </div>
           </div>
 
-          <VideoRoom
-            url={sessionData?.roomUrl || `room-${sessionId}`}
-            roomId={sessionId}
+          <DailyVideoRoom
+            roomName={sessionData?.roomName || sessionId}
             userName={sessionData?.userName || "User"}
             appointmentId={sessionData?.appointmentId}
+            isDoctor={sessionData?.isDoctor || false}
             onLeave={handleLeave}
           />
         </div>

@@ -1,36 +1,134 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MediMaven 🏥 - Next-Gen Telehealth Platform
 
-## Getting Started
+![MediMaven Banner](public/assets/screenshots/home.png)
 
-First, run the development server:
+> **Hackathon Track**: Use Case 2 – Telehealth Solution for Access to Healthcare from Anywhere.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+MediMaven is a cutting-edge **Telehealth platform** designed to bridge the gap between patients and healthcare providers, ensuring instant, secure, and accessible medical consultations from the comfort of your home. Built for the modern world, it integrates advanced video conferencing, real-time transcription, and secure payment processing to deliver a seamless healthcare experience.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 Key Features & Hackathon Requirements
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This project directly addresses the hackathon problem statement by implementing the following core solutions:
 
-## Learn More
+### 1. 📹 Instant Video Consultations (Daily.co)
+**"Instant access to Health consultation similar to in person experience"**
+- High-definition, low-latency video calls powered by **Daily.co WebRTC**.
+- Secure, HIPAA-compliant video rooms generated dynamically for each appointment.
+- Screen sharing and in-call chat support for better diagnosis.
 
-To learn more about Next.js, take a look at the following resources:
+### 2. 💳 Integrated Payments (Square Up)
+**"Ability to accept payment for the Telehealth consultation before the actual consultation begins"**
+- Seamless payment gateway integration using **Square Up**.
+- Patients can securely pay for consultations upfront.
+- Supports credit/debit cards and digital wallets.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 3. 📝 Live Transcription & AI Summary (DeepGram & OpenRouter)
+**"Overcome challenges of difference in dialect/ accent in remote consultation via a transcription service"**
+- **DeepGram**: Real-time, medical-grade speech-to-text transcription during video calls to ensure no detail is missed, regardless of accents or dialects.
+- **OpenRouter (LLM)**: Generates intelligent post-consultation summaries from the transcript, highlighting key diagnosis points, prescriptions, and follow-up actions.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📸 Application Screenshots
 
-## Deploy on Vercel
+### Home Page
+The landing page featuring our mission, services, and easy navigation.
+![Home Page](public/assets/screenshots/home.png)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Key Features
+Overview of our platform's capabilities.
+![Features](public/assets/screenshots/features.png)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Doctor Search
+Find the right specialist with ease.
+![Find Doctors](public/assets/screenshots/doctors.png)
+
+### Patient Dashboard
+Manage appointments, view medical history, and join calls.
+> *[Insert Patient Dashboard Screenshot Here]*
+
+### Doctor Dashboard
+Manage availability, view upcoming consultations, and patient records.
+> *[Insert Doctor Dashboard Screenshot Here]*
+
+### Secure Video Consultation
+The heart of MediMaven - where the consultation happens.
+> *[Insert Video Call Session Screenshot Here]*
+
+### Smart Review & Summary
+AI-generated summary of the consultation for future reference.
+> *[Insert Review Page Screenshot Here]*
+
+---
+
+## 🛠️ Technology Stack
+
+- **Frontend**: Next.js 14 (App Router), React, TailwindCSS, Framer Motion
+- **Backend / DB**: Node.js, MongoDB (Mongoose)
+- **Authentication**: NextAuth.js (Custom Credentials & JWT)
+- **Video / Audio**: Daily.co API
+- **Payments**: Square Web Payments SDK
+- **AI & ML**: 
+  - **DeepGram** (Transcription)
+  - **OpenRouter** (AI Summaries)
+  - **Google Cloud Platform** (Maps & Natural Language)
+
+---
+
+## 🏁 Getting Started
+
+### Prerequisites
+- Node.js (v18+)
+- MongoDB connection string
+- API Keys for Daily.co, Square, DeepGram, and OpenRouter.
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/medimaven.git
+   cd medimaven
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up Environment Variables**
+   Create a `.env.local` file and add:
+   ```env
+   # Database
+   MONGODB_URI=your_mongodb_uri
+
+   # Auth
+   AUTH_SECRET=your_auth_secret
+
+   # Daily.co (Video)
+   DAILY_API_KEY=your_daily_key
+
+   # Square (Payments)
+   NEXT_PUBLIC_SQUARE_APP_ID=your_app_id
+   NEXT_PUBLIC_SQUARE_LOCATION_ID=your_location_id
+   SQUARE_ACCESS_TOKEN=your_access_token
+
+   # AI Services
+   DEEPGRAM_API_KEY=your_deepgram_key
+   OPENROUTER_API_KEY=your_openrouter_key
+   ```
+
+4. **Run the development server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open the app**
+   Visit `http://localhost:3000` to see the application in action.
+
+---
+
+## 👥 Contributors
+
+- **Vijender Yadav** - *Full Stack Developer*
+
+---

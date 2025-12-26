@@ -70,6 +70,7 @@ export async function getSessionDetails(sessionId: string) {
 
     return {
       roomUrl: appointment.meetingLink || `room-${appointment._id}`,
+      roomName: appointment.meetingLink?.split("/").pop() || `room-${appointment._id}`,
       sessionId: appointment._id.toString(),
       appointmentId: appointment._id.toString(),
       userId: userId,
@@ -80,6 +81,8 @@ export async function getSessionDetails(sessionId: string) {
       specialty: (appointment.doctorId as any)?.specialty,
       duration: appointment.duration || 30,
       scheduledDate: appointment.date,
+      status: appointment.status,
+      isCompleted: appointment.status === "completed",
       isDoctor,
       isPatient
     }
