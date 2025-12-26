@@ -10,7 +10,7 @@ import { TranscriptionPanel } from "@/components/video/TranscriptionPanel"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, ArrowLeft, Shield, Video, Clock, User, MessageCircle, FileHeart, FileText, CheckCircle2 } from "lucide-react"
+import { Loader2, ArrowLeft, Shield, User, MessageCircle, FileHeart, FileText, CheckCircle2 } from "lucide-react"
 
 export default function SessionPage() {
   const router = useRouter()
@@ -19,7 +19,6 @@ export default function SessionPage() {
   
   const [sessionData, setSessionData] = React.useState<any>(null)
   const [isLoading, setIsLoading] = React.useState(true)
-  const [hasJoined, setHasJoined] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [isChatOpen, setIsChatOpen] = React.useState(false)
   const [isHealthPanelOpen, setIsHealthPanelOpen] = React.useState(false)
@@ -75,7 +74,7 @@ export default function SessionPage() {
     )
   }
 
-  // Meeting already completed
+  // Session already completed
   if (sessionData?.isCompleted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-neutral-900 via-neutral-800 to-black flex items-center justify-center p-4">
@@ -127,74 +126,7 @@ export default function SessionPage() {
     )
   }
 
-  // Pre-call lobby
-  if (!hasJoined) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-neutral-900 via-neutral-800 to-black flex items-center justify-center p-4">
-        <Card className="max-w-lg w-full border-neutral-700 bg-neutral-900/80 backdrop-blur">
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center">
-              <Video className="h-8 w-8 text-primary" />
-            </div>
-            <CardTitle className="text-2xl text-white">Ready to Join?</CardTitle>
-            <CardDescription className="text-neutral-400">
-              Your secure video consultation is ready
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="space-y-6">
-            {/* Session Info */}
-            <div className="space-y-3 p-4 bg-neutral-800/50 rounded-lg border border-neutral-700">
-              {sessionData?.doctorName && (
-                <div className="flex items-center gap-3 text-neutral-300">
-                  <User className="h-4 w-4 text-primary" />
-                  <span className="text-sm">
-                    {sessionData.isDoctor ? `Patient: ${sessionData.patientName}` : `Doctor: ${sessionData.doctorName}`}
-                  </span>
-                </div>
-              )}
-              <div className="flex items-center gap-3 text-neutral-300">
-                <Clock className="h-4 w-4 text-primary" />
-                <span className="text-sm">Session Duration: {sessionData?.duration || 30} minutes</span>
-              </div>
-              <div className="flex items-center gap-3 text-neutral-300">
-                <Shield className="h-4 w-4 text-green-500" />
-                <span className="text-sm">End-to-end encrypted</span>
-              </div>
-            </div>
-            
-            {/* Privacy Notice */}
-            <div className="text-xs text-neutral-500 text-center space-y-1">
-              <p>By joining, you agree to our telehealth terms of service.</p>
-              <p>This session may be recorded for medical records.</p>
-            </div>
-            
-            {/* Actions */}
-            <div className="flex flex-col gap-3">
-              <Button 
-                size="lg" 
-                className="w-full h-12 text-lg"
-                onClick={() => setHasJoined(true)}
-              >
-                <Video className="mr-2 h-5 w-5" />
-                Join Session
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="text-neutral-400 hover:text-white"
-                onClick={() => router.back()}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Go Back
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  // Video Room
+  // Video Room - with pre-join lobby built into the component
   return (
     <div className="min-h-screen bg-black flex">
       {/* Patient Health Panel - Only visible for doctors */}
@@ -207,66 +139,69 @@ export default function SessionPage() {
         </div>
       )}
       
-      <div className="flex-1 flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-6xl">
-          <div className="mb-4 flex items-center justify-between text-white">
-            <Button 
-              variant="ghost" 
-              className="text-white hover:text-white/80" 
-              onClick={() => setHasJoined(false)}
+      <div className="flex-1 flex flex-col">
+        {/* Top bar with tools */}
+        <div className="flex items-center justify-between p-4 bg-black/90 border-b border-neutral-800">
+          <Button 
+            variant="ghost" 
+            className="text-white hover:text-white/80" 
+            onClick={() => router.push("/dashboard")}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+          </Button>
+          <div className="flex items-center gap-3">
+            {/* Patient Health button - only for doctors */}
+            {sessionData?.isDoctor && (
+              <Button
+                variant="outline"
+                size="sm"
+                className={`border-neutral-600 text-white hover:bg-neutral-700 ${isHealthPanelOpen ? 'bg-primary/20 border-primary' : 'bg-neutral-800'}`}
+                onClick={() => setIsHealthPanelOpen(!isHealthPanelOpen)}
+              >
+                <FileHeart className="h-4 w-4 mr-2" />
+                Patient Info
+              </Button>
+            )}
+            {/* Transcription button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className={`border-neutral-600 text-white hover:bg-neutral-700 ${isTranscriptionOpen ? 'bg-primary/20 border-primary' : 'bg-neutral-800'}`}
+              onClick={() => setIsTranscriptionOpen(!isTranscriptionOpen)}
             >
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Lobby
+              <FileText className="h-4 w-4 mr-2" />
+              Transcribe
             </Button>
-            <div className="flex items-center gap-3">
-              {/* Patient Health button - only for doctors */}
-              {sessionData?.isDoctor && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-neutral-600 bg-neutral-800 text-white hover:bg-neutral-700"
-                  onClick={() => setIsHealthPanelOpen(!isHealthPanelOpen)}
-                >
-                  <FileHeart className="h-4 w-4 mr-2" />
-                  Patient Info
-                </Button>
-              )}
-              {/* Transcription button */}
-              <Button
-                variant="outline"
-                size="sm"
-                className={`border-neutral-600 text-white hover:bg-neutral-700 ${isTranscriptionOpen ? 'bg-primary/20 border-primary' : 'bg-neutral-800'}`}
-                onClick={() => setIsTranscriptionOpen(!isTranscriptionOpen)}
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Transcribe
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-neutral-600 bg-neutral-800 text-white hover:bg-neutral-700"
-                onClick={() => setIsChatOpen(!isChatOpen)}
-              >
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Chat
-              </Button>
-              <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
-                <Shield className="h-3 w-3 mr-1" />
-                Secure Connection
-              </Badge>
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 bg-red-500 rounded-full animate-pulse"></span>
-                <span className="font-mono text-sm">LIVE</span>
-              </div>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className={`border-neutral-600 text-white hover:bg-neutral-700 ${isChatOpen ? 'bg-primary/20 border-primary' : 'bg-neutral-800'}`}
+              onClick={() => setIsChatOpen(!isChatOpen)}
+            >
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Chat
+            </Button>
+            <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30 hidden md:flex">
+              <Shield className="h-3 w-3 mr-1" />
+              Secure
+            </Badge>
           </div>
+        </div>
 
-          <DailyVideoRoom
-            roomName={sessionData?.roomName || sessionId}
-            userName={sessionData?.userName || "User"}
-            appointmentId={sessionData?.appointmentId}
-            isDoctor={sessionData?.isDoctor || false}
-            onLeave={handleLeave}
-          />
+        {/* Video Room */}
+        <div className="flex-1 p-4 flex items-center justify-center">
+          <div className="w-full max-w-6xl">
+            <DailyVideoRoom
+              roomName={sessionData?.roomName || sessionId}
+              userName={sessionData?.userName || "User"}
+              userImage={sessionData?.userImage}
+              appointmentId={sessionData?.appointmentId}
+              isDoctor={sessionData?.isDoctor || false}
+              doctorName={sessionData?.doctorName}
+              patientName={sessionData?.patientName}
+              onLeave={handleLeave}
+            />
+          </div>
         </div>
       </div>
       

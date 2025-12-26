@@ -75,6 +75,7 @@ export async function getSessionDetails(sessionId: string) {
       appointmentId: appointment._id.toString(),
       userId: userId,
       userName: session.user.name || "User",
+      userImage: session.user.image,
       doctorName: (appointment.doctorId as any)?.name || "Doctor",
       patientName: (appointment.patientId as any)?.name || "Patient",
       patientHealthProfile: isDoctor ? (appointment.patientId as any)?.healthProfile : undefined,

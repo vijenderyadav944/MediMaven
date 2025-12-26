@@ -111,7 +111,7 @@ export async function getAdminStats() {
   }
 }
 
-// Get all doctors for admin
+// Get all doctors for admin with stats
 export async function getAllDoctors() {
   try {
     const session = await auth()
@@ -125,10 +125,49 @@ export async function getAllDoctors() {
       .select("name email specialty image bio doctorProfile createdAt")
       .lean()
 
-    return JSON.parse(JSON.stringify(doctors.map(d => ({
-      ...d,
-      id: d._id.toString()
-    }))))
+    // Get stats for each doctor
+    const doctorIds = doctors.map(d => d._id)
+    
+    // Get appointment stats per doctor
+    const appointmentStats = await Appointment.aggregate([
+      { $match: { doctorId: { $in: doctorIds } } },
+      {
+        $group: {
+          _id: "$doctorId",
+          totalMeetings: { $sum: 1 },
+          completedMeetings: {
+            $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] }
+          },
+          totalEarnings: {
+            $sum: { $cond: [{ $eq: ["$paymentStatus", "paid"] }, "$amount", 0] }
+          },
+          avgRating: { $avg: "$rating" }
+        }
+      }
+    ])
+
+    const statsMap = new Map(
+      appointmentStats.map(s => [s._id.toString(), {
+        totalMeetings: s.totalMeetings,
+        completedMeetings: s.completedMeetings,
+        totalEarnings: s.totalEarnings,
+        avgRating: s.avgRating || 5.0
+      }])
+    )
+
+    return JSON.parse(JSON.stringify(doctors.map(d => {
+      const stats = statsMap.get(d._id.toString()) || {
+        totalMeetings: 0,
+        completedMeetings: 0,
+        totalEarnings: 0,
+        avgRating: 5.0
+      }
+      return {
+        ...d,
+        id: d._id.toString(),
+        stats
+      }
+    })))
   } catch (error) {
     console.error("Error fetching doctors:", error)
     return []
