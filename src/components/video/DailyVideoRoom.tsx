@@ -78,6 +78,7 @@ export function DailyVideoRoom({
   const callRef = useRef<DailyCall | null>(null)
   const localVideoRef = useRef<HTMLVideoElement>(null)
   const remoteVideoRef = useRef<HTMLVideoElement>(null)
+  const remoteAudioRef = useRef<HTMLAudioElement>(null)
   const previewVideoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const previewStreamRef = useRef<MediaStream | null>(null)
@@ -301,9 +302,12 @@ export function DailyVideoRoom({
       return updated
     })
     
-    // Clear remote video if no participants
+    // Clear remote video and audio if no participants
     if (remoteVideoRef.current) {
       remoteVideoRef.current.srcObject = null
+    }
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = null
     }
   }, [])
 
@@ -317,14 +321,20 @@ export function DailyVideoRoom({
   }, [])
 
   const updateRemoteVideo = (participant: DailyParticipant) => {
+    // Handle remote video
     if (remoteVideoRef.current && participant.tracks?.video?.persistentTrack) {
-      const stream = new MediaStream([participant.tracks.video.persistentTrack])
-      remoteVideoRef.current.srcObject = stream
-      
-      // Also add audio
-      if (participant.tracks?.audio?.persistentTrack) {
-        stream.addTrack(participant.tracks.audio.persistentTrack)
-      }
+      const videoStream = new MediaStream([participant.tracks.video.persistentTrack])
+      remoteVideoRef.current.srcObject = videoStream
+    }
+    
+    // Handle remote audio separately - this is critical for audio to work
+    if (remoteAudioRef.current && participant.tracks?.audio?.persistentTrack) {
+      const audioStream = new MediaStream([participant.tracks.audio.persistentTrack])
+      remoteAudioRef.current.srcObject = audioStream
+      // Ensure audio plays
+      remoteAudioRef.current.play().catch(err => {
+        console.log("Audio autoplay blocked, user interaction needed:", err)
+      })
     }
   }
 
@@ -735,6 +745,9 @@ export function DailyVideoRoom({
           "absolute inset-0 flex items-center justify-center",
           isMobile ? "pt-16 pb-28" : "pt-20 pb-24"
         )}>
+          {/* Remote Audio - Hidden but essential for audio playback */}
+          <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
+          
           {/* Remote Video (Main) */}
           <div className="absolute inset-0 flex items-center justify-center">
             {remoteParticipant ? (
@@ -743,6 +756,7 @@ export function DailyVideoRoom({
                   ref={remoteVideoRef}
                   autoPlay
                   playsInline
+                  muted  // Video element muted, audio comes from separate audio element
                   className={cn(
                     "w-full h-full object-cover",
                     videoEffect === "blur" && "backdrop-blur-sm"
