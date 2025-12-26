@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
-import { authConfig } from "@/lib/auth";
+import { authConfigEdge } from "@/lib/auth";
 
-export default NextAuth(authConfig).auth;
+export default NextAuth(authConfigEdge).auth;
 
 export const config = {
   // Exclude public assets, public pages.
