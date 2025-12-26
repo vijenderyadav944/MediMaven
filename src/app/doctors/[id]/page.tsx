@@ -5,7 +5,11 @@ import { getDoctorById } from "@/app/actions/doctor"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { CheckCircle2, Clock, DollarSign, MapPin, Star, Video, Calendar } from "lucide-react"
+import { Clock, DollarSign, Star, Video } from "lucide-react"
+
+// Disable caching for real-time data
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 export default async function DoctorProfilePage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -16,7 +20,7 @@ export default async function DoctorProfilePage(props: { params: Promise<{ id: s
   }
 
   return (
-    <div className="container py-8 max-w-5xl">
+    <div className="container py-8 max-w-5xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Sidebar / Info Card */}
         <div className="md:col-span-1 space-y-6">

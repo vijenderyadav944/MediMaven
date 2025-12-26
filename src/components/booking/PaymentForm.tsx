@@ -11,18 +11,25 @@ interface PaymentFormProps {
   onSuccess: (transactionId: string) => void;
 }
 
-// Sandbox Application ID (Public Sandbox Key for Hackathon usage)
-// Normally this goes in .env, but for generic hackathon templates we can use a known sandbox ID or placeholders.
-// I will use a placeholder that works or requires user input.
-// Actually, Square SDK requires a valid App ID to render.
-// I will wrap it in an error boundary or provide a clear message if ID is missing.
-const SQUARE_APP_ID = process.env.NEXT_PUBLIC_SQUARE_APP_ID || "sandbox-sq0idb-mock-app-id";
-const SQUARE_LOCATION_ID = process.env.NEXT_PUBLIC_SQUARE_LOCATION_ID || "L_MOCK";
+// Sandbox Application ID
+// Must be set in .env.local
+const SQUARE_APP_ID = process.env.NEXT_PUBLIC_SQUARE_APP_ID;
+const SQUARE_LOCATION_ID = process.env.NEXT_PUBLIC_SQUARE_LOCATION_ID;
 
 export function SecurePaymentForm({ amount, onSuccess }: PaymentFormProps) {
   const [isProcessing, setIsProcessing] = React.useState(false)
 
+  if (!SQUARE_APP_ID || !SQUARE_LOCATION_ID) {
+    return (
+      <div className="p-4 border border-red-200 rounded bg-red-50 text-red-700">
+        Configuration Error: Square Application ID or Location ID is missing.
+      </div>
+    );
+  }
+
   // MOCK MODE: If Env vars are missing, render a simulation button
+  // (We removed mock mode fallback above, so now we strictly enforce keys)
+
   if (SQUARE_APP_ID === "sandbox-sq0idb-mock-app-id") {
     return (
       <div className="space-y-4 border p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/10">
@@ -56,10 +63,15 @@ export function SecurePaymentForm({ amount, onSuccess }: PaymentFormProps) {
   return (
     <div className="p-4 border rounded-md">
       <PaymentForm
-        applicationId={SQUARE_APP_ID}
-        cardTokenizeResponseReceived={async (token: any, verifiedBuyer) => {
+        applicationId={SQUARE_APP_ID!}
+        cardTokenizeResponseReceived={async (tokenResult) => {
+          if (tokenResult.status !== 'OK' || !tokenResult.token) {
+            alert("Card tokenization failed. Please try again.");
+            return;
+          }
+          
           setIsProcessing(true);
-          const res = await processPayment(amount, token.token);
+          const res = await processPayment(amount, tokenResult.token);
           setIsProcessing(false);
           if (res.success && res.transactionId) {
             onSuccess(res.transactionId);
@@ -67,7 +79,7 @@ export function SecurePaymentForm({ amount, onSuccess }: PaymentFormProps) {
             alert("Payment failed: " + res.error);
           }
         }}
-        locationId={SQUARE_LOCATION_ID}
+        locationId={SQUARE_LOCATION_ID!}
       >
         <CreditCard />
       </PaymentForm>

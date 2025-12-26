@@ -27,8 +27,6 @@ export function Sidebar({ className, role = "doctor" }: SidebarProps) {
 
   const doctorLinks = [
     { href: "/doctor/dashboard", label: "Overview", icon: LayoutDashboard },
-    { href: "/doctor/dashboard/availability", label: "Availability", icon: Clock },
-    { href: "/doctor/dashboard/settings", label: "Settings", icon: Settings },
   ]
 
   const patientLinks = [
