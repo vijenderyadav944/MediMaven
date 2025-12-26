@@ -119,3 +119,40 @@ export async function getSpecialties() {
     return []
   }
 }
+
+// Get booked slots for a doctor on a specific date
+export async function getBookedSlots(doctorId: string, date: Date) {
+  try {
+    await connectToDatabase()
+    const { Appointment } = await import("@/lib/models/Appointment")
+
+    // Get start and end of the selected day
+    const startOfDay = new Date(date)
+    startOfDay.setHours(0, 0, 0, 0)
+    const endOfDay = new Date(date)
+    endOfDay.setHours(23, 59, 59, 999)
+
+    // Find all appointments for this doctor on this date that are not cancelled or failed
+    const appointments = await Appointment.find({
+      doctorId,
+      date: { $gte: startOfDay, $lte: endOfDay },
+      status: { $ne: "cancelled" },
+      paymentStatus: { $ne: "failed" }
+    }).lean()
+
+    // Extract booked time slots
+    const bookedSlots = appointments.map(apt => {
+      const aptDate = new Date(apt.date)
+      const hours = aptDate.getHours()
+      const minutes = aptDate.getMinutes()
+      const period = hours >= 12 ? "PM" : "AM"
+      const hour12 = hours % 12 || 12
+      return `${hour12.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")} ${period}`
+    })
+
+    return bookedSlots
+  } catch (error) {
+    console.error("Error fetching booked slots:", error)
+    return []
+  }
+}

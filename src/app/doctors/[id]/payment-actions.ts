@@ -28,18 +28,20 @@ export async function processPayment(amount: number, sourceId: string) {
     await connectToDatabase()
 
     // 1. Create Payment with Square API
-    // Amount is in lowest denomination (paise for INR)
-    // We assume input 'amount' is in Rupees and convert to paise.
-
-    // SAFEGUARD: Ensure amount is a number
-    const amountMoney = BigInt(Math.round(amount * 100));
+    // Square Sandbox only supports USD, so we convert INR to USD
+    // Using approximate exchange rate: 1 USD = 83 INR
+    const INR_TO_USD_RATE = 83;
+    const amountInUSD = amount / INR_TO_USD_RATE;
+    
+    // Amount is in cents for USD
+    const amountMoney = BigInt(Math.round(amountInUSD * 100));
 
     const result = await squareClient.payments.create({
       sourceId: sourceId,
       idempotencyKey: randomUUID(),
       amountMoney: {
         amount: amountMoney,
-        currency: "INR", // Indian Rupees
+        currency: "USD", // Square Sandbox requires USD
       },
     });
 

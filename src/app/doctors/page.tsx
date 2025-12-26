@@ -17,13 +17,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { searchDoctors } from "@/app/actions/doctor"
+import { searchDoctors, getSpecialties } from "@/app/actions/doctor"
 
 export default function DoctorsPage() {
   const [searchTerm, setSearchTerm] = React.useState("")
   const [specialty, setSpecialty] = React.useState("all")
   const [doctors, setDoctors] = React.useState<any[]>([])
+  const [specialties, setSpecialties] = React.useState<string[]>([])
   const [loading, setLoading] = React.useState(true)
+
+  // Fetch specialties on mount
+  React.useEffect(() => {
+    async function fetchSpecialties() {
+      try {
+        const specs = await getSpecialties()
+        setSpecialties(specs)
+      } catch (error) {
+        console.error("Failed to fetch specialties:", error)
+      }
+    }
+    fetchSpecialties()
+  }, [])
 
   // Debounced search or simple effect for now
   React.useEffect(() => {
@@ -66,10 +80,11 @@ export default function DoctorsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Specialties</SelectItem>
-                  <SelectItem value="cardiologist">Cardiologist</SelectItem>
-                  <SelectItem value="dermatologist">Dermatologist</SelectItem>
-                  <SelectItem value="pediatrician">Pediatrician</SelectItem>
-                  <SelectItem value="psychiatrist">Psychiatrist</SelectItem>
+                  {specialties.map((spec) => (
+                    <SelectItem key={spec} value={spec.toLowerCase()}>
+                      {spec}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

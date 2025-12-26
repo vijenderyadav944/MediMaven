@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { getDoctorById } from "@/app/actions/doctor"
-import { getAvailableSlots, createAppointment, updatePaymentStatus } from "@/app/actions/appointment"
+import { getAvailableSlots, createAppointment, updatePaymentStatus, markPaymentFailed } from "@/app/actions/appointment"
 import { Calendar } from "@/components/ui/calendar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -113,7 +113,7 @@ function BookAppointmentContent() {
             <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold mb-2">Booking Confirmed!</h1>
             <p className="text-muted-foreground mb-6">
-              Your appointment with Dr. {doctor.name} has been booked successfully.
+              Your appointment with {doctor.name} has been booked successfully.
             </p>
             <div className="bg-white dark:bg-gray-900 rounded-lg p-4 mb-6 text-left space-y-2">
               <div className="flex justify-between">
@@ -138,10 +138,20 @@ function BookAppointmentContent() {
     )
   }
 
+  // Handle cancellation during payment step
+  async function handleCancelPayment() {
+    if (pendingAppointment) {
+      await markPaymentFailed(pendingAppointment.id)
+      setPendingAppointment(null)
+    }
+    setStep("select")
+    setSelectedSlot(null)
+  }
+
   return (
     <div className="container max-w-4xl py-10 mx-auto">
-      <Button variant="ghost" className="mb-6 pl-0" onClick={() => step === "payment" ? setStep("select") : router.back()}>
-        <ArrowLeft className="mr-2 h-4 w-4" /> {step === "payment" ? "Back to Selection" : "Back"}
+      <Button variant="ghost" className="mb-6 pl-0" onClick={() => step === "payment" ? handleCancelPayment() : router.back()}>
+        <ArrowLeft className="mr-2 h-4 w-4" /> {step === "payment" ? "Cancel Payment" : "Back"}
       </Button>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

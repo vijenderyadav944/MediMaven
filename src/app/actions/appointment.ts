@@ -176,6 +176,40 @@ export async function updatePaymentStatus(appointmentId: string, transactionId: 
   }
 }
 
+// Mark payment as failed (for cancelled/failed payments)
+export async function markPaymentFailed(appointmentId: string) {
+  try {
+    const session = await auth()
+    if (!session?.user) {
+      return { error: "Not authenticated" }
+    }
+
+    await connectToDatabase()
+
+    const appointment = await Appointment.findById(appointmentId)
+    if (!appointment) {
+      return { error: "Appointment not found" }
+    }
+
+    // Verify user is the patient
+    if (appointment.patientId.toString() !== session.user.id) {
+      return { error: "Unauthorized" }
+    }
+
+    appointment.paymentStatus = "failed"
+    appointment.status = "cancelled"
+    await appointment.save()
+
+    revalidatePath("/patient/dashboard")
+    revalidatePath("/doctor/dashboard")
+
+    return { success: true }
+  } catch (error) {
+    console.error("Failed to mark payment as failed:", error)
+    return { error: "Failed to update payment status" }
+  }
+}
+
 // Cancel an appointment
 export async function cancelAppointment(appointmentId: string) {
   try {
@@ -363,7 +397,8 @@ export async function getAvailableSlots(doctorId: string, dateStr: string) {
     const existingAppointments = await Appointment.find({
       doctorId,
       date: { $gte: startOfDay, $lte: endOfDay },
-      status: { $ne: "cancelled" }
+      status: { $ne: "cancelled" },
+      paymentStatus: { $ne: "failed" }
     }).select("date duration").lean()
 
     // 4. Generate All Possible Slots
