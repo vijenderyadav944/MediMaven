@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar, Clock, CreditCard, History, User, Video, Star, MessageSquare, Zap } from "lucide-react"
 import { getPatientAppointments } from "@/app/actions/appointment"
 import { format, isAfter, isBefore, addMinutes } from "date-fns"
+import { CancelAppointmentBtn } from "@/components/dashboard/CancelAppointmentBtn"
 
 export default async function PatientDashboard() {
   const session = await auth()
@@ -17,15 +18,15 @@ export default async function PatientDashboard() {
 
   const appointments = await getPatientAppointments()
   const now = new Date()
-  
+
   // Filter appointments
-  const upcomingAppointments = appointments.filter((a: any) => 
+  const upcomingAppointments = appointments.filter((a: any) =>
     new Date(a.date) > now && a.status !== "cancelled"
   )
-  const historyAppointments = appointments.filter((a: any) => 
+  const historyAppointments = appointments.filter((a: any) =>
     new Date(a.date) <= now || a.status === "completed"
   )
-  
+
   // Check if appointment is joinable (within 10 min before to 30 min after scheduled time)
   const isJoinable = (apt: any) => {
     const aptDate = new Date(apt.date)
@@ -61,10 +62,10 @@ export default async function PatientDashboard() {
                 {upcomingAppointments.map((apt: any) => {
                   const canJoin = isJoinable(apt)
                   const meetingLink = apt.meetingLink || `/session/${apt._id}`
-                  
+
                   return (
-                    <div 
-                      key={apt._id} 
+                    <div
+                      key={apt._id}
                       className="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-accent/5 transition-colors"
                     >
                       <div className="flex items-center gap-4">
@@ -81,6 +82,10 @@ export default async function PatientDashboard() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
+                        <CancelAppointmentBtn
+                          appointmentId={apt._id}
+                          isPast={new Date(apt.date) < new Date()}
+                        />
                         {apt.paymentStatus === "pending" && (
                           <Badge variant="outline" className="text-yellow-600 border-yellow-600">
                             Payment Pending
@@ -156,7 +161,7 @@ export default async function PatientDashboard() {
               </Link>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Recent History</CardTitle>
@@ -190,7 +195,10 @@ export default async function PatientDashboard() {
                   <CreditCard className="h-4 w-4" /> Total Spent
                 </span>
                 <span className="text-muted-foreground font-medium">
-                  ₹{appointments.reduce((sum: number, a: any) => sum + (a.amount || 0), 0).toLocaleString()}
+                  ₹{appointments.reduce((sum: number, a: any) => {
+                    if (a.status === 'cancelled') return sum;
+                    return sum + (a.amount || 0);
+                  }, 0).toLocaleString()}
                 </span>
               </div>
             </CardContent>

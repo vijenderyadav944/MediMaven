@@ -62,11 +62,22 @@ export async function getDoctorStats() {
 
     await connectToDatabase()
 
-    const appointments = await Appointment.find({ doctorId: session.user.id }).lean()
+    const appointments = await Appointment.find({
+      doctorId: session.user.id,
+      status: { $ne: "cancelled" }
+    }).lean()
 
     const uniquePatients = new Set(appointments.map(a => a.patientId.toString())).size
     const totalAppointments = appointments.length
-    const revenue = appointments.reduce((sum, a) => sum + (a.amount || 0), 0)
+    // Revenue logic: Sum amounts only if paid (and not refunded, though our query excludes cancelled which handles refunded items usually, 
+    // but safer to stand on status='cancelled' exclusion from the query + paymentStatus check if needed. 
+    // Since we exclude status='cancelled', we just sum 'amount' from the remaining. 
+    // Wait, if status is 'completed' or 'scheduled', payment might be 'pending' or 'paid'. 
+    // We should probably only count 'paid' for revenue.
+    const revenue = appointments.reduce((sum, a) => {
+      if (a.paymentStatus === "paid") return sum + (a.amount || 0)
+      return sum
+    }, 0)
 
     // Calculate ratings from completed appointments
     const ratedAppointments = await Appointment.find({
@@ -234,11 +245,24 @@ export async function cancelAppointment(appointmentId: string) {
       return { error: "Unauthorized" }
     }
 
+    // Check if appointment date is in the past
+    if (new Date(appointment.date) < new Date()) {
+      return { error: "Cannot cancel past appointments" }
+    }
+
     appointment.status = "cancelled"
+
+    // Auto-refund if already paid
+    if (appointment.paymentStatus === "paid") {
+      appointment.paymentStatus = "refunded"
+    }
+
     await appointment.save()
 
     revalidatePath("/patient/dashboard")
     revalidatePath("/doctor/dashboard")
+    // Revalidate admin just in case
+    revalidatePath("/admin/dashboard")
 
     return { success: true }
   } catch (error) {
@@ -541,7 +565,7 @@ export async function getAppointmentById(appointmentId: string) {
     const userId = session.user.id
     const patientIdStr = (appointment.patientId as any)?._id?.toString() || appointment.patientId?.toString()
     const doctorIdStr = (appointment.doctorId as any)?._id?.toString() || appointment.doctorId?.toString()
-    
+
     if (
       patientIdStr !== userId &&
       doctorIdStr !== userId &&

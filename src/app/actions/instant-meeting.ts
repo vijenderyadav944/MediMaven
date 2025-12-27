@@ -19,6 +19,45 @@ function generateRoomId(): string {
   return `im-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
 }
 
+// Force cancel all stuck instant meetings for the current patient
+// This is a cleanup function to resolve stuck states
+export async function forceCleanupStuckMeetings() {
+  try {
+    const session = await auth()
+    if (!session?.user) {
+      return { error: "Not authenticated" }
+    }
+
+    await connectToDatabase()
+
+    // Cancel all non-completed, non-cancelled meetings for this patient
+    const result = await InstantMeeting.updateMany(
+      {
+        patientId: session.user.id,
+        status: { $in: ["waiting", "matched", "in-progress"] }
+      },
+      {
+        $set: {
+          status: "cancelled",
+          notes: "Manually cancelled by patient to clear stuck state"
+        }
+      }
+    )
+
+    revalidatePath("/patient/dashboard")
+    revalidatePath("/doctor/dashboard")
+    revalidatePath("/session/instant")
+
+    return { 
+      success: true, 
+      message: `Cleaned up ${result.modifiedCount} stuck meeting(s)` 
+    }
+  } catch (error) {
+    console.error("Failed to cleanup stuck meetings:", error)
+    return { error: "Failed to cleanup stuck meetings" }
+  }
+}
+
 // Create a new instant meeting request
 export async function createInstantMeetingRequest(specialty: string) {
   try {
@@ -33,6 +72,26 @@ export async function createInstantMeetingRequest(specialty: string) {
 
     await connectToDatabase()
 
+    // First, auto-cancel any stale matched/waiting meetings (older than 30 mins)
+    // This prevents issues where a doctor accepted a cancelled request
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000)
+    await InstantMeeting.updateMany(
+      {
+        patientId: session.user.id,
+        status: { $in: ["waiting", "matched"] },
+        $or: [
+          { createdAt: { $lt: thirtyMinutesAgo } },
+          { matchedAt: { $lt: thirtyMinutesAgo } }
+        ]
+      },
+      {
+        $set: {
+          status: "cancelled",
+          notes: "Auto-cancelled: Meeting request expired"
+        }
+      }
+    )
+
     // Check if patient already has a pending instant meeting
     const existingRequest = await InstantMeeting.findOne({
       patientId: session.user.id,
@@ -40,7 +99,7 @@ export async function createInstantMeetingRequest(specialty: string) {
     })
 
     if (existingRequest) {
-      return { 
+      return {
         error: "You already have an active instant meeting request",
         existingId: existingRequest._id.toString()
       }
@@ -419,8 +478,11 @@ export async function cancelInstantMeetingRequest(instantMeetingId: string) {
     await instantMeeting.save()
 
     // TODO: Trigger refund if payment was made
+    // Simulating refund by keeping paymentStatus as is (or mark refunded if we had that status)
+    // For now, let's assuming cancelled implies refund logic elsewhere or manual
 
     revalidatePath("/patient/dashboard")
+    revalidatePath("/doctor/dashboard")
 
     return { success: true }
   } catch (error) {
@@ -488,7 +550,7 @@ export async function getInstantMeetingById(instantMeetingId: string) {
     const userId = session.user.id
     const patientIdStr = (meeting.patientId as any)?._id?.toString() || meeting.patientId?.toString()
     const doctorIdStr = (meeting.doctorId as any)?._id?.toString() || meeting.doctorId?.toString()
-    
+
     if (
       patientIdStr !== userId &&
       doctorIdStr !== userId &&

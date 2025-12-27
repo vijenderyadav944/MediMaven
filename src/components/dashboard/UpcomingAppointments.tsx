@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar, Video, Eye } from "lucide-react"
 import { format, isAfter, isBefore, addMinutes } from "date-fns"
 import { PatientDetailsDialog } from "./PatientDetailsDialog"
+import { CancelAppointmentBtn } from "./CancelAppointmentBtn"
 
 interface Appointment {
   _id: string
@@ -63,10 +64,10 @@ export function UpcomingAppointments({ appointments }: UpcomingAppointmentsProps
               {appointments.slice(0, 5).map((apt) => {
                 const canJoin = isJoinable(apt)
                 const meetingLink = apt.meetingLink || `/session/${apt._id}`
-                
+
                 return (
-                  <div 
-                    key={apt._id} 
+                  <div
+                    key={apt._id}
                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/30 transition-colors cursor-pointer"
                     onClick={() => handleViewPatient(apt)}
                   >
@@ -87,15 +88,19 @@ export function UpcomingAppointments({ appointments }: UpcomingAppointmentsProps
                       </div>
                     </div>
                     <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="gap-1"
                         onClick={() => handleViewPatient(apt)}
                       >
                         <Eye className="h-3 w-3" />
                         View
                       </Button>
+                      <CancelAppointmentBtn
+                        appointmentId={apt._id}
+                        isPast={new Date(apt.date) < new Date()}
+                      />
                       {apt.paymentStatus === "pending" && (
                         <Badge variant="outline" className="text-yellow-600 border-yellow-600">
                           Unpaid
@@ -123,7 +128,7 @@ export function UpcomingAppointments({ appointments }: UpcomingAppointmentsProps
           )}
         </CardContent>
       </Card>
-      
+
       <PatientDetailsDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}

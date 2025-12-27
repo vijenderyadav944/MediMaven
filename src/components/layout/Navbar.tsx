@@ -11,6 +11,7 @@ import {
   Sheet,
   SheetContent,
   SheetTrigger,
+  SheetTitle,
 } from "@/components/ui/sheet"
 import {
   DropdownMenu,
@@ -24,6 +25,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 // Navigation Links
 const navigation = [
+  { name: "Home", href: "/" },
   { name: "Features", href: "/features" },
   { name: "Doctors", href: "/doctors" },
   { name: "How it Works", href: "/how-it-works" },
@@ -32,8 +34,9 @@ const navigation = [
 
 export function Navbar() {
   const pathname = usePathname()
-  const { data: session } = useSession() // Hook to get session
+  const { data: session } = useSession()
   const [isScrolled, setIsScrolled] = React.useState(false)
+  const [isOpen, setIsOpen] = React.useState(false) // State for sidebar
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -143,57 +146,85 @@ export function Navbar() {
 
         {/* Mobile Menu */}
         <div className="md:hidden flex items-center gap-2">
-          <Sheet>
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="shrink-0">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-75 sm:w-100">
-              <nav className="flex flex-col gap-4 mt-8">
-                {navigation.map((item) => (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className="text-lg font-medium hover:text-primary transition-colors block py-2 border-b border-border/50"
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-                
-                {/* Instant Consultation in Mobile Menu */}
-                <Link href="/session/instant" className="block">
-                  <Button className="w-full gap-2 bg-amber-500 hover:bg-amber-600">
-                    <Zap className="h-4 w-4" />
-                    Instant Consultation
-                  </Button>
-                </Link>
+            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+              <div className="flex flex-col h-full">
+                {/* Mobile Header with Logo */}
+                <div className="flex items-center gap-2 mb-8 px-2">
+                  <div className="bg-primary text-primary-foreground p-1.5 rounded-lg">
+                    <Stethoscope className="h-5 w-5" />
+                  </div>
+                  <SheetTitle className="text-xl font-bold tracking-tight">
+                    MediMaven
+                  </SheetTitle>
+                </div>
 
-                <div className="flex flex-col gap-3 mt-4">
+                <nav className="flex flex-col gap-2 flex-1">
+                  {navigation.map((item) => (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setIsOpen(false)}
+                      className={`text-lg font-medium px-4 py-3 rounded-md transition-colors ${pathname === item.href
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        }`}
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+
+                  {/* Instant Consultation in Mobile Menu */}
+                  <Link href="/session/instant" onClick={() => setIsOpen(false)} className="mt-4 px-2">
+                    <Button className="w-full gap-2 bg-amber-500 hover:bg-amber-600 text-white shadow-md">
+                      <Zap className="h-4 w-4" />
+                      Instant Consultation
+                    </Button>
+                  </Link>
+                </nav>
+
+                <div className="flex flex-col gap-3 mt-auto mb-6 px-2">
                   {session?.user ? (
                     <>
-                      <Link href="/dashboard" className="w-full">
-                        <Button className="w-full justify-start gap-2">
+                      <div className="flex items-center gap-3 px-2 mb-4">
+                        <Avatar className="h-10 w-10 border border-border">
+                          <AvatarImage src={session.user.image || ""} alt={session.user.name || ""} />
+                          <AvatarFallback>
+                            {session.user.name?.[0]?.toUpperCase() || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col">
+                          <p className="text-sm font-medium">{session.user.name}</p>
+                          <p className="text-xs text-muted-foreground truncate max-w-[180px]">{session.user.email}</p>
+                        </div>
+                      </div>
+                      <Link href="/dashboard" className="w-full" onClick={() => setIsOpen(false)}>
+                        <Button variant="outline" className="w-full justify-start gap-2 h-11">
                           <LayoutDashboard className="h-4 w-4" /> Dashboard
                         </Button>
                       </Link>
-                      <Button variant="outline" className="w-full justify-start gap-2 text-red-500" onClick={() => signOut()}>
+                      <Button variant="ghost" className="w-full justify-start gap-2 h-11 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => signOut()}>
                         <LogOut className="h-4 w-4" /> Log out
                       </Button>
                     </>
                   ) : (
                     <>
-                      <Link href="/auth/login" className="w-full">
-                        <Button variant="outline" className="w-full justify-center">Log in</Button>
+                      <Link href="/auth/login" className="w-full" onClick={() => setIsOpen(false)}>
+                        <Button variant="outline" className="w-full justify-center h-11">Log in</Button>
                       </Link>
-                      <Link href="/auth/register" className="w-full">
-                        <Button className="w-full justify-center">Get Started</Button>
+                      <Link href="/auth/register" className="w-full" onClick={() => setIsOpen(false)}>
+                        <Button className="w-full justify-center h-11 shadow-sm">Get Started</Button>
                       </Link>
                     </>
                   )}
                 </div>
-              </nav>
+              </div>
             </SheetContent>
           </Sheet>
         </div>

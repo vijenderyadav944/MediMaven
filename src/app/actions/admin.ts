@@ -77,8 +77,16 @@ export async function getAdminStats() {
     await connectToDatabase()
 
     // 1. Total Revenue
+    // Only count appointments where payment is paid AND status is not cancelled (though paid usually implies not cancelled, 
+    // unless they cancelled but refund request is pending/stuck, but our cancelAppointment sets it to refunded.
+    // So ensuring status is not cancelled covers all bases.)
     const revenueStats = await Appointment.aggregate([
-      { $match: { paymentStatus: "paid" } },
+      {
+        $match: {
+          paymentStatus: "paid",
+          status: { $ne: "cancelled" }
+        }
+      },
       { $group: { _id: null, total: { $sum: "$amount" } } }
     ])
     const revenue = revenueStats[0]?.total || 0
@@ -87,7 +95,7 @@ export async function getAdminStats() {
     const activeDoctors = await User.countDocuments({ role: "doctor" })
 
     // 3. Total Sessions
-    const totalSessions = await Appointment.countDocuments({})
+    const totalSessions = await Appointment.countDocuments({ status: { $ne: "cancelled" } })
 
     // Mock growth for now as we need historical data logic which is complex
     const growth = {
@@ -127,10 +135,15 @@ export async function getAllDoctors() {
 
     // Get stats for each doctor
     const doctorIds = doctors.map(d => d._id)
-    
+
     // Get appointment stats per doctor
     const appointmentStats = await Appointment.aggregate([
-      { $match: { doctorId: { $in: doctorIds } } },
+      {
+        $match: {
+          doctorId: { $in: doctorIds },
+          status: { $ne: "cancelled" }
+        }
+      },
       {
         $group: {
           _id: "$doctorId",

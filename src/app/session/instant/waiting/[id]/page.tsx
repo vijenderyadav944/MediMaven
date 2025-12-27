@@ -3,10 +3,10 @@
 import * as React from "react"
 import { useRouter, useParams } from "next/navigation"
 import { motion } from "framer-motion"
-import { 
-  Loader2, 
-  Clock, 
-  Shield, 
+import {
+  Loader2,
+  Clock,
+  Shield,
   X,
   CheckCircle2,
   Stethoscope,
@@ -26,7 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { 
+import {
   getInstantMeetingStatus,
   cancelInstantMeetingRequest
 } from "@/app/actions/instant-meeting"
@@ -35,12 +35,13 @@ export default function WaitingRoomPage() {
   const router = useRouter()
   const params = useParams()
   const instantMeetingId = params.id as string
-  
+
   const [status, setStatus] = React.useState<any>(null)
   const [error, setError] = React.useState<string | null>(null)
   const [showCancelDialog, setShowCancelDialog] = React.useState(false)
   const [cancelling, setCancelling] = React.useState(false)
   const [waitTime, setWaitTime] = React.useState(0)
+  const [refundStatus, setRefundStatus] = React.useState<"none" | "successful" | "initiated">("none")
 
   // Poll for status updates
   React.useEffect(() => {
@@ -50,7 +51,7 @@ export default function WaitingRoomPage() {
     const checkStatus = async () => {
       try {
         const result = await getInstantMeetingStatus(instantMeetingId)
-        
+
         if (result.error) {
           setError(result.error)
           return
@@ -72,7 +73,8 @@ export default function WaitingRoomPage() {
           router.push(`/session/instant/${instantMeetingId}/review`)
         }
 
-        if (result.status === "cancelled") {
+        if (result.status === "cancelled" && refundStatus === "none") {
+          // Only show error if we didn't initiate the cancel ourselves with a refund flow
           setError("This request has been cancelled")
         }
       } catch (err) {
@@ -95,13 +97,13 @@ export default function WaitingRoomPage() {
       clearInterval(pollInterval)
       clearInterval(waitInterval)
     }
-  }, [instantMeetingId, router])
+  }, [instantMeetingId, router, refundStatus])
 
   const handleCancel = async () => {
     setCancelling(true)
     try {
       const result = await cancelInstantMeetingRequest(instantMeetingId)
-      
+
       if (result.error) {
         setError(result.error)
         setShowCancelDialog(false)
@@ -109,7 +111,15 @@ export default function WaitingRoomPage() {
         return
       }
 
-      router.push("/patient/dashboard")
+      // Determine refund status based on wait time
+      if (waitTime < 60) {
+        setRefundStatus("successful")
+      } else {
+        setRefundStatus("initiated")
+      }
+      setShowCancelDialog(false)
+      setCancelling(false)
+
     } catch (err) {
       setError("Failed to cancel request")
       setCancelling(false)
@@ -120,6 +130,54 @@ export default function WaitingRoomPage() {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
     return `${mins}:${secs.toString().padStart(2, "0")}`
+  }
+
+  // Refund Success View
+  if (refundStatus === "successful") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-background via-background to-primary/5 p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
+              <CheckCircle2 className="h-8 w-8 text-green-600" />
+            </div>
+            <CardTitle className="text-xl text-green-700">Refund Successful</CardTitle>
+            <CardDescription>
+              Your instant meeting request has been cancelled. As you waited less than a minute, your refund has been processed successfully.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button className="w-full" onClick={() => router.push("/patient/dashboard")}>
+              Return to Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Refund Initiated View (for > 1 min wait)
+  if (refundStatus === "initiated") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-background via-background to-primary/5 p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-amber-100 flex items-center justify-center">
+              <CheckCircle2 className="h-8 w-8 text-amber-600" />
+            </div>
+            <CardTitle className="text-xl text-amber-700">Refund Initiated</CardTitle>
+            <CardDescription>
+              We are sorry for the long wait. Your meeting request has been cancelled and a refund has been initiated. It should reflect in your account shortly.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button className="w-full" onClick={() => router.push("/patient/dashboard")}>
+              Return to Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   if (error) {
@@ -184,12 +242,12 @@ export default function WaitingRoomPage() {
       <Card className="max-w-lg w-full">
         <CardHeader className="text-center pb-2">
           <motion.div
-            animate={{ 
+            animate={{
               scale: [1, 1.1, 1],
               opacity: [1, 0.8, 1]
             }}
-            transition={{ 
-              duration: 2, 
+            transition={{
+              duration: 2,
               repeat: Infinity,
               ease: "easeInOut"
             }}
@@ -214,13 +272,13 @@ export default function WaitingRoomPage() {
               <Stethoscope className="h-12 w-12 text-primary" />
             </div>
           </motion.div>
-          
+
           <CardTitle className="text-2xl">Finding Your Doctor</CardTitle>
           <CardDescription className="text-base mt-2">
             Please wait while we connect you with an available specialist...
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent className="space-y-6">
           {/* Wait Time */}
           <div className="flex items-center justify-center gap-2 text-lg">
@@ -260,8 +318,8 @@ export default function WaitingRoomPage() {
           </div>
 
           {/* Cancel Button */}
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="w-full"
             onClick={() => setShowCancelDialog(true)}
           >
@@ -275,14 +333,25 @@ export default function WaitingRoomPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Cancel Request?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to cancel this instant meeting request? 
-              Your payment will be refunded.
+            <AlertDialogDescription className="space-y-2" asChild>
+              <div>
+                {waitTime < 60 ? (
+                  <>
+                    <p>Are you sure you want to cancel? If you keep waiting, we will likely find a doctor soon.</p>
+                    <p className="font-medium text-green-600">You can opt for an immediate refund if you cancel now.</p>
+                  </>
+                ) : (
+                  <>
+                    <p>We apologize for the delay. We are currently experiencing high demand.</p>
+                    <p className="font-medium">You can continue waiting or cancel now for a full refund.</p>
+                  </>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={cancelling}>Keep Waiting</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleCancel}
               disabled={cancelling}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -290,7 +359,7 @@ export default function WaitingRoomPage() {
               {cancelling ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
-              Yes, Cancel
+              {waitTime < 60 ? "Refund & Cancel" : "Refund & Cancel"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

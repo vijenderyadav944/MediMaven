@@ -7,7 +7,7 @@ export interface IAppointment extends Document {
   date: Date;
   duration: number; // in minutes
   status: "scheduled" | "completed" | "cancelled";
-  paymentStatus: "pending" | "paid" | "failed";
+  paymentStatus: "pending" | "paid" | "failed" | "refunded";
   amount: number;
   meetingLink?: string;
   notes?: string;
@@ -30,7 +30,7 @@ const AppointmentSchema = new Schema<IAppointment>(
     date: { type: Date, required: true },
     duration: { type: Number, default: 30 },
     status: { type: String, enum: ["scheduled", "completed", "cancelled"], default: "scheduled" },
-    paymentStatus: { type: String, enum: ["pending", "paid", "failed"], default: "pending" },
+    paymentStatus: { type: String, enum: ["pending", "paid", "failed", "refunded"], default: "pending" },
     amount: { type: Number, required: true },
     meetingLink: { type: String },
     notes: { type: String },
