@@ -2,6 +2,10 @@
 
 ![MediMaven Banner](public/assets/screenshots/home.png)
 
+## 🎥 Demo Video
+[Watch the Demo](https://drive.google.com/file/d/15xWC5kQqL9bmjM3XXvk1J4y9YorNMrSk/view?usp=sharing)
+
+
 > **Hackathon Track**: Use Case 2 – Telehealth Solution for Access to Healthcare from Anywhere.
 
 MediMaven is a cutting-edge **Telehealth platform** designed to bridge the gap between patients and healthcare providers, ensuring instant, secure, and accessible medical consultations from the comfort of your home. Built for the modern world, it integrates advanced video conferencing, real-time transcription, and secure payment processing to deliver a seamless healthcare experience.
