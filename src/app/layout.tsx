@@ -11,6 +11,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "MediMaven - Advanced Telehealth Platform",
   description: "Connect with top doctors for seamless video consultations.",
+  icons: {
+    icon: "/images/fevicon.png",
+  },
 };
 
 export default function RootLayout({
