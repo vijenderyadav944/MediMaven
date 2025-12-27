@@ -10,6 +10,8 @@
 
 MediMaven is a cutting-edge **Telehealth platform** designed to bridge the gap between patients and healthcare providers, ensuring instant, secure, and accessible medical consultations from the comfort of your home. Built for the modern world, it integrates advanced video conferencing, real-time transcription, and secure payment processing to deliver a seamless healthcare experience.
 
+> 🌓 **Theme Support**: MediMaven features automatic light and dark mode that adapts to your browser and system settings for optimal viewing comfort. *All screenshots in this README are displayed in dark mode.*
+
 ---
 
 ## 📑 Table of Contents
