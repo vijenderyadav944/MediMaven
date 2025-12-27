@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Clock, CreditCard, History, User, Video, Star, MessageSquare, Zap } from "lucide-react"
 import { getPatientAppointments } from "@/app/actions/appointment"
-import { format, isAfter, isBefore, addMinutes } from "date-fns"
+import { isAfter, isBefore, addMinutes } from "date-fns"
+import { formatInIST, formatDateTimeIST } from "@/lib/date-utils"
 import { CancelAppointmentBtn } from "@/components/dashboard/CancelAppointmentBtn"
 
 export default async function PatientDashboard() {
@@ -77,7 +78,7 @@ export default async function PatientDashboard() {
                           <p className="text-sm text-muted-foreground">{apt.doctorId?.specialty || 'Specialist'}</p>
                           <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                             <Clock className="h-3 w-3" />
-                            <span>{format(new Date(apt.date), "PPP p")}</span>
+                            <span>{formatDateTimeIST(apt.date)}</span>
                           </div>
                         </div>
                       </div>
@@ -100,7 +101,7 @@ export default async function PatientDashboard() {
                           </Link>
                         ) : (
                           <Badge variant="secondary">
-                            {format(new Date(apt.date), "MMM d, h:mm a")}
+                            {formatInIST(apt.date, "MMM d, h:mm a")}
                           </Badge>
                         )}
                       </div>
@@ -172,7 +173,7 @@ export default async function PatientDashboard() {
                   <div key={apt._id} className="flex justify-between items-center text-sm">
                     <div className="flex items-center gap-2">
                       <History className="h-4 w-4" />
-                      <span>{format(new Date(apt.date), "MM/dd/yyyy")}</span>
+                      <span>{formatInIST(apt.date, "MM/dd/yyyy")}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       {apt.rating ? (

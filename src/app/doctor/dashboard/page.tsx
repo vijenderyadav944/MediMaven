@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Users, DollarSign, Activity, Star, Video, Clock, CheckCircle2 } from "lucide-react"
 import { getDoctorStats, getDoctorAppointments } from "@/app/actions/appointment"
-import { format, isAfter, isBefore, addMinutes } from "date-fns"
+import { isAfter, isBefore, addMinutes } from "date-fns"
+import { formatTimeIST, formatInIST, isTodayIST } from "@/lib/date-utils"
 import { DoctorScheduleView } from "@/components/dashboard/DoctorScheduleView"
 import { UpcomingAppointments } from "@/components/dashboard/UpcomingAppointments"
 import { InstantMeetingRequests } from "@/components/dashboard/InstantMeetingRequests"
@@ -30,8 +31,7 @@ export default async function DoctorDashboard() {
   
   // Today's appointments
   const todayAppointments = allAppointments.filter((apt: any) => {
-    const aptDate = new Date(apt.date)
-    return aptDate.toDateString() === now.toDateString() && apt.status !== "cancelled"
+    return isTodayIST(apt.date) && apt.status !== "cancelled"
   })
   
   // Check if appointment is joinable (within 10 min before to 30 min after scheduled time)
@@ -101,7 +101,7 @@ export default async function DoctorDashboard() {
               <Clock className="h-5 w-5 text-primary" />
               Today&apos;s Schedule
             </CardTitle>
-            <CardDescription>{format(now, "EEEE, MMMM d")}</CardDescription>
+            <CardDescription>{formatInIST(now, "EEEE, MMMM d")}</CardDescription>
           </CardHeader>
           <CardContent>
             {todayAppointments.length > 0 ? (
@@ -118,7 +118,7 @@ export default async function DoctorDashboard() {
                       <div>
                         <p className="font-medium text-sm">{apt.patientId?.name || "Patient"}</p>
                         <p className="text-xs text-muted-foreground">
-                          {format(new Date(apt.date), "h:mm a")}
+                          {formatTimeIST(apt.date)}
                         </p>
                       </div>
                       {canJoin ? (
@@ -135,7 +135,7 @@ export default async function DoctorDashboard() {
                         </Badge>
                       ) : (
                         <Badge variant="outline">
-                          {format(new Date(apt.date), "h:mm a")}
+                          {formatTimeIST(apt.date)}
                         </Badge>
                       )}
                     </div>

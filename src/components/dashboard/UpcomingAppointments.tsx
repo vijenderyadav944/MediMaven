@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Video, Eye } from "lucide-react"
-import { format, isAfter, isBefore, addMinutes } from "date-fns"
+import { isAfter, isBefore, addMinutes } from "date-fns"
+import { formatDateTimeIST } from "@/lib/date-utils"
 import { PatientDetailsDialog } from "./PatientDetailsDialog"
 import { CancelAppointmentBtn } from "./CancelAppointmentBtn"
 
@@ -78,7 +79,7 @@ export function UpcomingAppointments({ appointments }: UpcomingAppointmentsProps
                       <div>
                         <p className="font-medium">{apt.patientId?.name || "Patient"}</p>
                         <p className="text-sm text-muted-foreground">
-                          {format(new Date(apt.date), "PPP")} at {format(new Date(apt.date), "h:mm a")}
+                          {formatDateTimeIST(apt.date)}
                         </p>
                         {apt.notes && (
                           <p className="text-xs text-muted-foreground mt-1 line-clamp-1">

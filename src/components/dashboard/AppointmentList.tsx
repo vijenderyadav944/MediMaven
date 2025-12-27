@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Video, Calendar, Clock, CheckCircle2 } from "lucide-react"
-import { format, isAfter, isBefore, addMinutes } from "date-fns"
+import { isAfter, isBefore, addMinutes } from "date-fns"
+import { formatTimeIST, isTodayIST } from "@/lib/date-utils"
 
 interface Appointment {
   _id: string
@@ -43,8 +44,7 @@ export function AppointmentList({ appointments, userRole }: AppointmentListProps
 
   // Filter for today's appointments
   const todayAppointments = appointments.filter((apt) => {
-    const aptDate = new Date(apt.date)
-    return aptDate.toDateString() === now.toDateString() && apt.status !== "cancelled"
+    return isTodayIST(apt.date) && apt.status !== "cancelled"
   })
 
   if (todayAppointments.length === 0) {
@@ -96,7 +96,7 @@ export function AppointmentList({ appointments, userRole }: AppointmentListProps
                   )}
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Calendar className="h-3 w-3" /> Today
-                    <Clock className="h-3 w-3 ml-2" /> {format(new Date(apt.date), "h:mm a")}
+                    <Clock className="h-3 w-3 ml-2" /> {formatTimeIST(apt.date)}
                   </div>
                 </div>
               </div>
@@ -115,7 +115,7 @@ export function AppointmentList({ appointments, userRole }: AppointmentListProps
                   </Link>
                 ) : (
                   <Badge variant="outline">
-                    {format(new Date(apt.date), "h:mm a")}
+                    {formatTimeIST(apt.date)}
                   </Badge>
                 )}
               </div>

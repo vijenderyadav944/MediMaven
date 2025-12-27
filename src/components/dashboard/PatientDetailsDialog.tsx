@@ -22,7 +22,7 @@ import {
   Phone,
   FileText
 } from "lucide-react"
-import { format } from "date-fns"
+import { formatDateTimeIST, formatDateIST, formatTimeIST, formatInIST } from "@/lib/date-utils"
 
 interface PatientDetailsDialogProps {
   open: boolean
@@ -69,7 +69,7 @@ export function PatientDetailsDialog({ open, onOpenChange, appointment }: Patien
             Patient Details
           </DialogTitle>
           <DialogDescription>
-            Appointment on {format(new Date(appointment.date), "PPP")} at {format(new Date(appointment.date), "h:mm a")}
+            Appointment on {formatDateTimeIST(appointment.date)}
           </DialogDescription>
         </DialogHeader>
         
@@ -102,7 +102,7 @@ export function PatientDetailsDialog({ open, onOpenChange, appointment }: Patien
                 {patient?.dob && (
                   <div className="text-sm">
                     <span className="text-muted-foreground">DOB: </span>
-                    <span>{format(new Date(patient.dob), "PP")}</span>
+                    <span>{formatInIST(patient.dob, "PP")}</span>
                   </div>
                 )}
               </div>
@@ -119,11 +119,11 @@ export function PatientDetailsDialog({ open, onOpenChange, appointment }: Patien
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <span className="text-muted-foreground">Date: </span>
-                  {format(new Date(appointment.date), "PPP")}
+                  {formatDateIST(appointment.date)}
                 </div>
                 <div>
                   <span className="text-muted-foreground">Time: </span>
-                  {format(new Date(appointment.date), "h:mm a")}
+                  {formatTimeIST(appointment.date)}
                 </div>
                 <div>
                   <span className="text-muted-foreground">Duration: </span>

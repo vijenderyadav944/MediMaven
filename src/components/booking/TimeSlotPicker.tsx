@@ -115,7 +115,7 @@ export function TimeSlotPicker({ date, setDate, slot, setSlot, doctorId }: TimeS
 
       <div className="flex-1">
         <h3 className="font-semibold mb-3">Available Slots</h3>
-        <ScrollArea className="h-[300px] w-full rounded-md border p-4">
+        <ScrollArea className="h-75 w-full rounded-md border p-4">
           {date ? (
             loading ? (
               <div className="flex items-center justify-center h-full text-muted-foreground text-sm">

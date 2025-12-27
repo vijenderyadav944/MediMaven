@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar, Clock, Video, ChevronLeft, ChevronRight, User } from "lucide-react"
 import { format, addDays, startOfWeek, isSameDay, isAfter, isBefore, addMinutes } from "date-fns"
+import { formatInIST, toIST } from "@/lib/date-utils"
 import Link from "next/link"
 
 interface Appointment {
@@ -133,7 +134,7 @@ export function DoctorScheduleView({ appointments, availability = [] }: DoctorSc
         {/* Selected Date Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-lg">
-            {format(selectedDate, "EEEE, MMMM d, yyyy")}
+            {formatInIST(selectedDate, "EEEE, MMMM d, yyyy")}
           </h3>
           <Badge variant="secondary">
             {dayAppointments.length} appointment{dayAppointments.length !== 1 ? "s" : ""}
@@ -161,7 +162,7 @@ export function DoctorScheduleView({ appointments, availability = [] }: DoctorSc
                 {/* Time */}
                 <div className="w-20 text-sm font-mono text-muted-foreground flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  {format(new Date().setHours(hour, 0), "h:mm a")}
+                  {formatInIST(new Date(new Date().setHours(hour, 0)), "h:mm a")}
                 </div>
                 
                 {/* Appointment or Free */}

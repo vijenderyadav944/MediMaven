@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { MessageCircle, Send, X } from "lucide-react"
-import { format } from "date-fns"
+import { formatTimeIST } from "@/lib/date-utils"
 
 interface ChatPanelProps {
   appointmentId: string
@@ -106,7 +106,7 @@ export function ChatPanel({ appointmentId, currentUserId, isOpen, onClose }: Cha
                   >
                     <p className="text-sm wrap-break-word">{msg.content}</p>
                     <p className={`text-xs mt-1 ${isOwn ? "text-primary-foreground/70" : "text-neutral-500"}`}>
-                      {format(new Date(msg.createdAt), "h:mm a")}
+                      {formatTimeIST(msg.createdAt)}
                     </p>
                   </div>
                 </div>
