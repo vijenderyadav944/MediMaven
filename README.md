@@ -660,11 +660,12 @@ Manage availability, view schedule, and handle instant meeting requests.
 
 ### Video Consultation
 HD video calls with transcription, chat, and patient health cards.
-![Video Call](public/assets/screenshots/meeting.png)
+![Video Call](public/assets/screenshots/meeting.jpeg)
 
 ### AI-Generated Summary
 Bilingual consultation summaries for easy understanding.
-![AI Summary](public/assets/screenshots/ai-summary.png)
+![AI Summary](public/assets/screenshots/summary1.png)
+![AI Summary](public/assets/screenshots/summary2.png)
 
 ---
 
