@@ -5,8 +5,8 @@ import { Calendar } from "@/components/ui/calendar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { format } from "date-fns"
 import { getBookedSlots } from "@/app/actions/doctor"
+import { nowIST, toIST } from "@/lib/date-utils"
 
 interface TimeSlotPickerProps {
   date: Date | undefined;
@@ -35,26 +35,30 @@ function slotTo24Hour(slot: string): { hours: number; minutes: number } {
   return { hours, minutes }
 }
 
-// Check if a slot is in the past for today
+// Check if a slot is in the past for today (using IST timezone)
 function isSlotInPast(slot: string, selectedDate: Date): boolean {
-  const now = new Date()
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  // Get current time in IST
+  const nowInIST = nowIST()
   
-  const selectedDay = new Date(selectedDate)
-  selectedDay.setHours(0, 0, 0, 0)
+  // Get today's date in IST (midnight)
+  const todayIST = new Date(nowInIST)
+  todayIST.setHours(0, 0, 0, 0)
+  
+  // Convert selected date to IST and get midnight
+  const selectedDayIST = toIST(selectedDate)
+  selectedDayIST.setHours(0, 0, 0, 0)
   
   // If selected date is not today, slot is not in the past
-  if (selectedDay.getTime() !== today.getTime()) {
+  if (selectedDayIST.getTime() !== todayIST.getTime()) {
     return false
   }
   
   // For today, check if slot time has passed
   const { hours, minutes } = slotTo24Hour(slot)
-  const slotTime = new Date(selectedDate)
-  slotTime.setHours(hours, minutes, 0, 0)
+  const slotTimeIST = new Date(todayIST)
+  slotTimeIST.setHours(hours, minutes, 0, 0)
   
-  return slotTime <= now
+  return slotTimeIST <= nowInIST
 }
 
 export function TimeSlotPicker({ date, setDate, slot, setSlot, doctorId }: TimeSlotPickerProps) {
@@ -108,7 +112,11 @@ export function TimeSlotPicker({ date, setDate, slot, setSlot, doctorId }: TimeS
             selected={date}
             onSelect={setDate}
             className="rounded-md border-0"
-            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+            disabled={(date) => {
+              const todayIST = nowIST()
+              todayIST.setHours(0, 0, 0, 0)
+              return date < todayIST
+            }}
           />
         </div>
       </div>

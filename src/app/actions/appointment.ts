@@ -5,6 +5,7 @@ import { Appointment } from "@/lib/models/Appointment"
 import connectToDatabase from "@/lib/mongoose"
 import { revalidatePath } from "next/cache"
 import { User } from "@/lib/models/User"
+import { toIST, nowIST } from "@/lib/date-utils"
 
 // Helper to serialize mongo objects
 function serialize(obj: any) {
@@ -402,40 +403,44 @@ export async function getAvailableSlots(doctorId: string, dateStr: string) {
     }
     const consultationDuration = doctor.doctorProfile.consultationDuration || 30
 
-    // 2. Parse Date
-    const selectedDate = new Date(dateStr)
-    const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'short' })
+    // 2. Parse Date and convert to IST
+    const selectedDateIST = toIST(new Date(dateStr))
+    const dayName = selectedDateIST.toLocaleDateString('en-US', { weekday: 'short' })
 
     // Check if working day
     if (!availability.days.includes(dayName)) {
       return []
     }
 
-    // 3. Get Existing Appointments
-    const startOfDay = new Date(selectedDate)
-    startOfDay.setHours(0, 0, 0, 0)
+    // 3. Get Existing Appointments (use IST for date range)
+    const startOfDayIST = new Date(selectedDateIST)
+    startOfDayIST.setHours(0, 0, 0, 0)
 
-    const endOfDay = new Date(selectedDate)
-    endOfDay.setHours(23, 59, 59, 999)
+    const endOfDayIST = new Date(selectedDateIST)
+    endOfDayIST.setHours(23, 59, 59, 999)
+    
+    // Convert to UTC for database query (IST is UTC+5:30)
+    const startOfDayUTC = new Date(startOfDayIST.getTime() - (5.5 * 60 * 60 * 1000))
+    const endOfDayUTC = new Date(endOfDayIST.getTime() - (5.5 * 60 * 60 * 1000))
 
     const existingAppointments = await Appointment.find({
       doctorId,
-      date: { $gte: startOfDay, $lte: endOfDay },
+      date: { $gte: startOfDayUTC, $lte: endOfDayUTC },
       status: { $ne: "cancelled" },
       paymentStatus: { $ne: "failed" }
     }).select("date duration").lean()
 
-    // 4. Generate All Possible Slots
+    // 4. Generate All Possible Slots (in IST)
     const slots = []
-    const now = new Date()
+    const nowInIST = nowIST()
 
     const [startHour, startMin] = availability.startTime.split(':').map(Number)
     const [endHour, endMin] = availability.endTime.split(':').map(Number)
 
-    let currentSlot = new Date(selectedDate)
+    let currentSlot = new Date(selectedDateIST)
     currentSlot.setHours(startHour, startMin, 0, 0)
 
-    const endTime = new Date(selectedDate)
+    const endTime = new Date(selectedDateIST)
     endTime.setHours(endHour, endMin, 0, 0)
 
     const durationMs = consultationDuration * 60 * 1000
@@ -443,14 +448,14 @@ export async function getAvailableSlots(doctorId: string, dateStr: string) {
     while (currentSlot.getTime() + durationMs <= endTime.getTime()) {
       const slotEnd = new Date(currentSlot.getTime() + durationMs)
 
-      // Skip past time slots - only show future slots (with 15 min buffer)
-      const isInPast = currentSlot.getTime() < now.getTime() + 15 * 60 * 1000
+      // Skip past time slots - only show future slots (with 15 min buffer) using IST
+      const isInPast = currentSlot.getTime() < nowInIST.getTime() + 15 * 60 * 1000
 
-      // Check Overlap with existing appointments
+      // Check Overlap with existing appointments (convert appointments to IST for comparison)
       const isBlocked = existingAppointments.some((appt) => {
-        const apptStart = new Date(appt.date)
-        const apptEnd = new Date(apptStart.getTime() + (appt.duration * 60 * 1000))
-        return isOverlapping(currentSlot, slotEnd, apptStart, apptEnd)
+        const apptStartIST = toIST(appt.date)
+        const apptEndIST = new Date(apptStartIST.getTime() + (appt.duration * 60 * 1000))
+        return isOverlapping(currentSlot, slotEnd, apptStartIST, apptEndIST)
       })
 
       if (!isBlocked && !isInPast) {

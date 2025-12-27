@@ -2,6 +2,7 @@
 
 import { User } from "@/lib/models/User"
 import connectToDatabase from "@/lib/mongoose"
+import { toIST } from "@/lib/date-utils"
 
 function serialize(obj: any) {
   return JSON.parse(JSON.stringify(obj))
@@ -159,25 +160,33 @@ export async function getBookedSlots(doctorId: string, date: Date) {
     await connectToDatabase()
     const { Appointment } = await import("@/lib/models/Appointment")
 
-    // Get start and end of the selected day
-    const startOfDay = new Date(date)
+    // Convert to IST for proper date range calculation
+    const dateIST = toIST(date)
+    
+    // Get start and end of the selected day in IST
+    const startOfDay = new Date(dateIST)
     startOfDay.setHours(0, 0, 0, 0)
-    const endOfDay = new Date(date)
+    const endOfDay = new Date(dateIST)
     endOfDay.setHours(23, 59, 59, 999)
+    
+    // Convert back to UTC for database query
+    // IST is UTC+5:30, so subtract 5:30 hours
+    const startOfDayUTC = new Date(startOfDay.getTime() - (5.5 * 60 * 60 * 1000))
+    const endOfDayUTC = new Date(endOfDay.getTime() - (5.5 * 60 * 60 * 1000))
 
     // Find all appointments for this doctor on this date that are not cancelled or failed
     const appointments = await Appointment.find({
       doctorId,
-      date: { $gte: startOfDay, $lte: endOfDay },
+      date: { $gte: startOfDayUTC, $lte: endOfDayUTC },
       status: { $ne: "cancelled" },
       paymentStatus: { $ne: "failed" }
     }).lean()
 
-    // Extract booked time slots
+    // Extract booked time slots (convert to IST for display)
     const bookedSlots = appointments.map(apt => {
-      const aptDate = new Date(apt.date)
-      const hours = aptDate.getHours()
-      const minutes = aptDate.getMinutes()
+      const aptDateIST = toIST(apt.date)
+      const hours = aptDateIST.getHours()
+      const minutes = aptDateIST.getMinutes()
       const period = hours >= 12 ? "PM" : "AM"
       const hour12 = hours % 12 || 12
       return `${hour12.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")} ${period}`
