@@ -2,6 +2,9 @@
 
 ![MediMaven Banner](public/assets/screenshots/home.png)
 
+## Figma Design
+[View the Design](https://www.figma.com/design/NFR1b83mk41PQXtwJrS6at/MediMaven---Website-UI?node-id=1-2&t=jmZOcxnLWOjF8icD-1)
+
 ## 🎥 Demo Video
 [Watch the Demo](https://drive.google.com/file/d/15xWC5kQqL9bmjM3XXvk1J4y9YorNMrSk/view?usp=sharing)
 
