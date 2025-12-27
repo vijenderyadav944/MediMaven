@@ -736,12 +736,6 @@ Solution: We've implemented IST conversion - all dates use src/lib/date-utils.ts
 
 ---
 
-## 📄 License
-
-This project is built for the Hackathon and is available under the MIT License.
-
----
-
 <p align="center">
   Made with ❤️ for better healthcare access
 </p>
