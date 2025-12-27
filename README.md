@@ -582,8 +582,8 @@ Test Card Numbers (Sandbox):
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/medimaven.git
-   cd medimaven
+   git clone https://github.com/vijenderyadav944/MediMaven.git
+   cd MediMaven
    ```
 
 2. **Install dependencies**
@@ -660,7 +660,7 @@ Manage availability, view schedule, and handle instant meeting requests.
 
 ### Video Consultation
 HD video calls with transcription, chat, and patient health cards.
-![Video Call](public/assets/screenshots/video-session.png)
+![Video Call](public/assets/screenshots/meeting.png)
 
 ### AI-Generated Summary
 Bilingual consultation summaries for easy understanding.
